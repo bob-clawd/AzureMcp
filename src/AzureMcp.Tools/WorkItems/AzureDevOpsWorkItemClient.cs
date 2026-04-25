@@ -145,11 +145,9 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             State: GetString(fields, "System.State"),
             WorkItemType: GetString(fields, "System.WorkItemType"),
             DescriptionText: ToPlainText(descriptionHtml),
-            DescriptionHtml: descriptionHtml,
             AssignedTo: ParseAssignedTo(fields),
             ParentWorkItemId: parentId,
             ChildWorkItemIds: childIds,
-            RelatedWorkItemIds: relatedIds,
             Url: root.TryGetProperty("url", out var urlElement) ? urlElement.GetString() : null);
     }
 

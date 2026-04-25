@@ -10,9 +10,7 @@ public sealed record AzureDevOpsWorkItem(
     string? State,
     string? WorkItemType,
     string? DescriptionText,
-    string? DescriptionHtml,
     AzureDevOpsAssignedTo? AssignedTo,
     int? ParentWorkItemId,
     IReadOnlyList<int> ChildWorkItemIds,
-    IReadOnlyList<int> RelatedWorkItemIds,
     string? Url);

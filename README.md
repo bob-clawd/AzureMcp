@@ -112,14 +112,11 @@ Example response shape:
     "state": "Active",
     "workItemType": "User Story",
     "descriptionText": "Investigate missing logs during deployment.",
-    "descriptionHtml": "<div>Investigate missing logs during deployment.</div>",
     "assignedTo": {
       "displayName": "Ada Lovelace",
       "uniqueName": "ada@example.com"
     },
     "parentWorkItemId": 100,
-    "childWorkItemIds": [200, 201],
-    "relatedWorkItemIds": [300],
     "url": "https://dev.azure.com/your-org/_apis/wit/workItems/12345"
   },
   "error": null

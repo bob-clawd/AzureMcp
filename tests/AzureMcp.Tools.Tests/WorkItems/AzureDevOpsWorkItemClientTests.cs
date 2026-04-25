@@ -67,7 +67,6 @@ public sealed class AzureDevOpsWorkItemClientTests
         workItem.DescriptionText.Is("Investigate missing logs during deployment.\n\nCheck retention.");
         workItem.ParentWorkItemId.Is(100);
         workItem.ChildWorkItemIds.Is([200, 201]);
-        workItem.RelatedWorkItemIds.Is([300]);
     }
 
     [Fact]

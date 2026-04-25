@@ -60,11 +60,9 @@ public sealed class GetContextToolTests
                 State: "Active",
                 WorkItemType: "Feature",
                 DescriptionText: "Root description",
-                DescriptionHtml: null,
                 AssignedTo: null,
                 ParentWorkItemId: null,
                 ChildWorkItemIds: [2, 4],
-                RelatedWorkItemIds: [],
                 Url: "https://dev.azure.com/test-org/_apis/wit/workItems/1"),
             [2] = new(
                 Id: 2,
@@ -72,11 +70,9 @@ public sealed class GetContextToolTests
                 State: "Active",
                 WorkItemType: "Bug",
                 DescriptionText: "Child description",
-                DescriptionHtml: null,
                 AssignedTo: null,
                 ParentWorkItemId: 1,
                 ChildWorkItemIds: [3],
-                RelatedWorkItemIds: [],
                 Url: "https://dev.azure.com/test-org/_apis/wit/workItems/2"),
             [3] = new(
                 Id: 3,
@@ -84,11 +80,9 @@ public sealed class GetContextToolTests
                 State: "New",
                 WorkItemType: "Task",
                 DescriptionText: "Grandchild description",
-                DescriptionHtml: null,
                 AssignedTo: null,
                 ParentWorkItemId: 2,
                 ChildWorkItemIds: [],
-                RelatedWorkItemIds: [],
                 Url: "https://dev.azure.com/test-org/_apis/wit/workItems/3"),
             [4] = new(
                 Id: 4,
@@ -96,11 +90,9 @@ public sealed class GetContextToolTests
                 State: "New",
                 WorkItemType: "Task",
                 DescriptionText: "Sibling description",
-                DescriptionHtml: null,
                 AssignedTo: null,
                 ParentWorkItemId: 1,
                 ChildWorkItemIds: [],
-                RelatedWorkItemIds: [],
                 Url: "https://dev.azure.com/test-org/_apis/wit/workItems/4")
         };
 

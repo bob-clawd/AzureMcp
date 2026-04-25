@@ -12,11 +12,8 @@ public sealed record Ticket(
     string? State,
     string? WorkItemType,
     string? DescriptionText,
-    string? DescriptionHtml,
     AzureDevOpsAssignedTo? AssignedTo,
     int? ParentWorkItemId,
-    IReadOnlyList<int> ChildWorkItemIds,
-    IReadOnlyList<int> RelatedWorkItemIds,
     string? Url)
 {
     public static Ticket FromWorkItem(AzureDevOpsWorkItem workItem)
@@ -26,10 +23,7 @@ public sealed record Ticket(
             State: workItem.State,
             WorkItemType: workItem.WorkItemType,
             DescriptionText: workItem.DescriptionText,
-            DescriptionHtml: workItem.DescriptionHtml,
             AssignedTo: workItem.AssignedTo,
             ParentWorkItemId: workItem.ParentWorkItemId,
-            ChildWorkItemIds: workItem.ChildWorkItemIds,
-            RelatedWorkItemIds: workItem.RelatedWorkItemIds,
             Url: workItem.Url);
 }
