@@ -19,14 +19,12 @@ The current tools are `read_work_item` and `get_context`.
 
 - id
 - title
-- description (plain text + raw html when present)
-- assigned person
+- descriptionText (plain text)
+- assignedTo
 - state
 - work item type
-- url
-- parent work item id (when present)
-- child work item ids
-- related work item ids
+- parent ticket id (when present)
+- child ticket ids
 
 That gives us a real end-to-end slice to shape the architecture before adding more tools.
 
@@ -112,11 +110,9 @@ Example response shape:
     "state": "Active",
     "workItemType": "User Story",
     "descriptionText": "Investigate missing logs during deployment.",
-    "assignedTo": {
-      "displayName": "Ada Lovelace",
-      "uniqueName": "ada@example.com"
-    },
-    "parentWorkItemId": 100
+    "assignedTo": "Ada Lovelace",
+    "parentTicketId": 100,
+    "childTicketIds": [200, 201]
   },
   "error": null
 }
