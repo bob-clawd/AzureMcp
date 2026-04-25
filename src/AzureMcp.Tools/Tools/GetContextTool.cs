@@ -16,7 +16,7 @@ public sealed record GetContextResponse(
 public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevOpsConnectionState connectionState) : Tool
 {
     [McpServerTool(Name = "get_context", Title = "Get Work Item Context", ReadOnly = true, Idempotent = true)]
-    [Description("Load the vertical Azure DevOps work item context for a work item id: walk up to the topmost parent, then return the full parent-to-children hierarchy in stable order.")]
+    [Description("Load the Azure DevOps parent chain context for a work item id: walk up to the topmost parent and return the chain ordered from parent to child.")]
     public async Task<GetContextResponse> ExecuteAsync(
         [Description("Azure DevOps work item id anywhere inside the hierarchy.")] int workItemId,
         CancellationToken cancellationToken = default)
@@ -24,34 +24,8 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         if (!connectionState.TryGetRequired(out var connection, out var error))
             return GetContextResponse.AsError(error!);
 
-        var cache = new Dictionary<int, Ticket>();
-        var rootResult = await FindRootAsync(connection, workItemId, cache, cancellationToken).ConfigureAwait(false);
-        if (rootResult.Error is not null)
-            return GetContextResponse.AsError(rootResult.Error);
-
         var tickets = new List<Ticket>();
-        var visited = new HashSet<int>();
-
-        var traversalResult = await TraverseAsync(
-            connection,
-            rootResult.Root!.Id,
-            cache,
-            visited,
-            tickets,
-            cancellationToken).ConfigureAwait(false);
-
-        if (traversalResult is not null)
-            return GetContextResponse.AsError(traversalResult);
-
-        return new GetContextResponse(tickets);
-    }
-
-    private async Task<(Ticket? Root, ErrorInfo? Error)> FindRootAsync(
-        AzureDevOpsConnectionInfo connection,
-        int workItemId,
-        IDictionary<int, Ticket> cache,
-        CancellationToken cancellationToken)
-    {
+        var cache = new Dictionary<int, Ticket>();
         var currentId = workItemId;
         var visited = new HashSet<int>();
 
@@ -59,49 +33,26 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         {
             if (!visited.Add(currentId))
             {
-                return (null, new ErrorInfo(
+                return GetContextResponse.AsError(new ErrorInfo(
                     "Azure DevOps hierarchy contains a cycle while walking parents.",
                     new Dictionary<string, string> { ["workItemId"] = currentId.ToString() }));
             }
 
             var result = await LoadAsync(connection, currentId, cache, cancellationToken).ConfigureAwait(false);
             if (result.Error is not null)
-                return (null, result.Error);
+                return GetContextResponse.AsError(result.Error);
 
-            var current = result.Ticket!;
-            if (current.ParentId is null)
-                return (current, null);
+            var ticket = result.Ticket!;
+            tickets.Add(ticket);
 
-            currentId = current.ParentId.Value;
-        }
-    }
+            if (ticket.ParentId is null)
+                break;
 
-    private async Task<ErrorInfo?> TraverseAsync(
-        AzureDevOpsConnectionInfo connection,
-        int workItemId,
-        IDictionary<int, Ticket> cache,
-        ISet<int> visited,
-        ICollection<Ticket> tickets,
-        CancellationToken cancellationToken)
-    {
-        if (!visited.Add(workItemId))
-            return null;
-
-        var result = await LoadAsync(connection, workItemId, cache, cancellationToken).ConfigureAwait(false);
-        if (result.Error is not null)
-            return result.Error;
-
-        var ticket = result.Ticket!;
-        tickets.Add(ticket);
-
-        foreach (var childId in ticket.ChildrenIds)
-        {
-            var error = await TraverseAsync(connection, childId, cache, visited, tickets, cancellationToken).ConfigureAwait(false);
-            if (error is not null)
-                return error;
+            currentId = ticket.ParentId.Value;
         }
 
-        return null;
+        tickets.Reverse();
+        return new GetContextResponse(tickets);
     }
 
     private async Task<(Ticket? Ticket, ErrorInfo? Error)> LoadAsync(

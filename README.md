@@ -28,7 +28,7 @@ The current tools are `read_work_item` and `get_context`.
 
 That gives us a real end-to-end slice to shape the architecture before adding more tools.
 
-`get_context` accepts any work item id inside a parent/child hierarchy, walks upward to the topmost parent, then returns the vertical context in stable order from parent to children.
+`get_context` accepts any work item id, walks upward to the topmost parent, then returns the parent chain context in stable order from parent to child.
 
 ## Configuration
 

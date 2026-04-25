@@ -8,33 +8,42 @@ namespace AzureMcp.Tools.Tests.Tools;
 public sealed class GetContextToolTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenCalledWithChild_ReturnsRootToChildrenContext()
+    public async Task ExecuteAsync_WhenCalledWithChild_ReturnsParentChainContext()
     {
         var tool = new GetContextTool(new FakeClient(), new ConfiguredState());
 
         var result = await tool.ExecuteAsync(3);
 
         result.Error.IsNull();
-        result.Tickets.Select(item => item.Id).Is(1, 2, 3, 4);
+        result.Tickets.Select(item => item.Id).Is(1, 2, 3);
         result.Tickets.Select(item => item.DescriptionText).Is(
             "Root description",
             "Child description",
-            "Grandchild description",
-            "Sibling description");
+            "Grandchild description");
     }
 
     [Fact]
-    public async Task ExecuteAsync_ReturnsSameContext_ForRootAndNestedChild()
+    public async Task ExecuteAsync_WhenCalledWithRoot_ReturnsOnlyRoot()
     {
         var tool = new GetContextTool(new FakeClient(), new ConfiguredState());
 
-        var rootResult = await tool.ExecuteAsync(1);
-        var childResult = await tool.ExecuteAsync(3);
+        var result = await tool.ExecuteAsync(1);
 
-        rootResult.Error.IsNull();
-        childResult.Error.IsNull();
-        rootResult.Tickets.Select(item => item.Id).Is(childResult.Tickets.Select(item => item.Id).ToArray());
-        rootResult.Tickets.Select(item => item.DescriptionText).Is(childResult.Tickets.Select(item => item.DescriptionText).ToArray());
+        result.Error.IsNull();
+        result.Tickets.Select(item => item.Id).Is(1);
+        result.Tickets.Select(item => item.DescriptionText).Is("Root description");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenCalledWithSibling_ReturnsRootToSiblingChain()
+    {
+        var tool = new GetContextTool(new FakeClient(), new ConfiguredState());
+
+        var result = await tool.ExecuteAsync(4);
+
+        result.Error.IsNull();
+        result.Tickets.Select(item => item.Id).Is(1, 4);
+        result.Tickets.Select(item => item.DescriptionText).Is("Root description", "Sibling description");
     }
 
     [Fact]
