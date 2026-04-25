@@ -69,10 +69,10 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
                 return (null, result.Error);
 
             var current = result.Ticket!;
-            if (current.ParentTicketId is null)
+            if (current.ParentId is null)
                 return (current, null);
 
-            currentId = current.ParentTicketId.Value;
+            currentId = current.ParentId.Value;
         }
     }
 
@@ -94,7 +94,7 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         var ticket = result.Ticket!;
         tickets.Add(ticket);
 
-        foreach (var childId in ticket.ChildTicketIds)
+        foreach (var childId in ticket.ChildrenIds)
         {
             var error = await TraverseAsync(connection, childId, cache, visited, tickets, cancellationToken).ConfigureAwait(false);
             if (error is not null)

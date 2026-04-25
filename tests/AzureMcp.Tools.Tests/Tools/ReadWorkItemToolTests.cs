@@ -51,8 +51,8 @@ public sealed class ReadWorkItemToolTests
                 WorkItemType: "Bug",
                 DescriptionText: "Look at the failed release logs.",
                 AssignedTo: "Grace Hopper",
-                ParentTicketId: 1,
-                ChildTicketIds: new[] { 2, 3 });
+                ParentId: 1,
+                ChildrenIds: new[] { 2, 3 });
 
             return Task.FromResult<(Ticket? Ticket, ErrorInfo? Error)>((ticket, null));
         }

@@ -149,8 +149,8 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             WorkItemType: GetString(fields, "System.WorkItemType"),
             DescriptionText: ToPlainText(descriptionHtml),
             AssignedTo: ParseAssignedTo(fields),
-            ParentTicketId: parentId,
-            ChildTicketIds: childIds);
+            ParentId: parentId,
+            ChildrenIds: childIds);
     }
 
     private static int? TryGetLinkedWorkItemId(JsonElement relations, string relType)

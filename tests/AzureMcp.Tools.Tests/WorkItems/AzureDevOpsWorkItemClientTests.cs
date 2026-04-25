@@ -63,8 +63,8 @@ public sealed class AzureDevOpsWorkItemClientTests
         ticket.WorkItemType.Is("User Story");
         ticket.AssignedTo.Is("Ada Lovelace");
         ticket.DescriptionText.Is("Investigate missing logs during deployment.\n\nCheck retention.");
-        ticket.ParentTicketId.Is(100);
-        ticket.ChildTicketIds.Is([200, 201]);
+        ticket.ParentId.Is(100);
+        ticket.ChildrenIds.Is([200, 201]);
     }
 
     [Fact]

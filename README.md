@@ -23,8 +23,8 @@ The current tools are `read_work_item` and `get_context`.
 - assignedTo
 - state
 - work item type
-- parent ticket id (when present)
-- child ticket ids
+- parentId (when present)
+- childrenIds
 
 That gives us a real end-to-end slice to shape the architecture before adding more tools.
 
@@ -111,8 +111,8 @@ Example response shape:
     "workItemType": "User Story",
     "descriptionText": "Investigate missing logs during deployment.",
     "assignedTo": "Ada Lovelace",
-    "parentTicketId": 100,
-    "childTicketIds": [200, 201]
+    "parentId": 100,
+    "childrenIds": [200, 201]
   },
   "error": null
 }
