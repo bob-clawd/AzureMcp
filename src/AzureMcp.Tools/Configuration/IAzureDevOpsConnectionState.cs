@@ -10,8 +10,4 @@ public interface IAzureDevOpsConnectionState
         out AzureDevOpsConnectionInfo connection,
         out ErrorInfo? error,
         out IReadOnlyList<string>? missingConfigKeys);
-
-    bool TryPersist(out ErrorInfo? error);
-
-    void Set(string? organizationUrl, string? personalAccessToken, string? project);
 }

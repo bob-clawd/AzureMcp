@@ -61,7 +61,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
                 return ReadWorkItemResult.AsError(
-                    "Azure DevOps request not authorized. Ask the user for a valid PAT (and required scopes), then call `configure_connection`.",
+                    "Azure DevOps request not authorized. Ask the user for a valid PAT (and required scopes), then update the config file.",
                     new Dictionary<string, string>
                     {
                         ["workItemId"] = workItemId.ToString(),

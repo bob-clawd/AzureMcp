@@ -36,17 +36,21 @@ AzureMcp requires a config file path on startup.
 The **config file is the source of truth** for the Azure DevOps connection.
 
 If required values are missing when you call a tool, the server returns an actionable error:
-ask the user for the missing value(s), then call `configure_connection` to write the config file.
+ask the user for the missing value(s), then update the config file.
 
 ### Required
 
 - `--config <path>` (required)
 
-### Tool: `configure_connection`
+### Config file shape
 
-You can set/update the connection values by writing/updating the config file via:
-
-- `configure_connection(organizationUrl?, personalAccessToken?, project?)`
+```json
+{
+  "organizationUrl": "https://dev.azure.com/your-org",
+  "personalAccessToken": "your-pat",
+  "project": "optional-project"
+}
+```
 
 ## Run locally
 

@@ -6,6 +6,6 @@ public static class AzureMcpErrors
     {
         var keys = string.Join(", ", missingConfigKeys);
         return new ErrorInfo(
-            $"AzureMcp is not configured. Config file: '{configPath}'. Missing: {keys}. Ask the user for the value(s), then call `configure_connection` with the provided values (this writes the config file).");
+            $"AzureMcp is not configured. Config file: '{configPath}'. Missing: {keys}. Ask the user for the value(s), then update the config file.");
     }
 }

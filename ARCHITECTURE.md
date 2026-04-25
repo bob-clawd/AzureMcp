@@ -73,7 +73,7 @@ AzureMcp requires a config file path on startup:
 The config file is the source of truth for Azure DevOps connection values.
 
 If required values are missing/invalid when you call a tool, the server returns an actionable error:
-ask the user for the missing value(s), then call `configure_connection` to rewrite the config file.
+ask the user for the missing value(s), then update the config file.
 
 ## Extension strategy
 

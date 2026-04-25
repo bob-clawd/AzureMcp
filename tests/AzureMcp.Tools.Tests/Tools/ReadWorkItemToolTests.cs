@@ -34,7 +34,7 @@ public sealed class ReadWorkItemToolTests
         Assert.Contains("Missing:", result.Error!.Message);
         Assert.Contains("organizationUrl", result.Error!.Message);
         Assert.Contains("personalAccessToken", result.Error!.Message);
-        Assert.Contains("configure_connection", result.Error!.Message);
+        Assert.Contains("config file", result.Error!.Message);
         Assert.Equal(new[] { "organizationUrl", "personalAccessToken" }, result.MissingConfigKeys);
         Assert.Equal(0, client.Calls);
     }
@@ -83,14 +83,6 @@ public sealed class ReadWorkItemToolTests
             return true;
         }
 
-        public bool TryPersist(out ErrorInfo? error)
-        {
-            error = null;
-            return true;
-        }
-
-        public void Set(string? organizationUrl, string? personalAccessToken, string? project) { }
-
         public string ConfigPath => "/tmp/azuremcp.json";
     }
 
@@ -105,14 +97,6 @@ public sealed class ReadWorkItemToolTests
             error = AzureMcpErrors.MissingConfig(ConfigPath, missingConfigKeys);
             return false;
         }
-
-        public bool TryPersist(out ErrorInfo? error)
-        {
-            error = null;
-            return true;
-        }
-
-        public void Set(string? organizationUrl, string? personalAccessToken, string? project) { }
 
         public string ConfigPath => "/tmp/azuremcp.json";
     }
