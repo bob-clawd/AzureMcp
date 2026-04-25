@@ -40,8 +40,9 @@ public sealed class ReadWorkItemToolTests
 
     private sealed class FakeClient : IAzureDevOpsWorkItemClient
     {
-        public Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int workItemId, CancellationToken cancellationToken = default)
-            => Task.FromResult(new AzureDevOpsWorkItem(
+        public Task<ReadWorkItemResult> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
+        {
+            var workItem = new AzureDevOpsWorkItem(
                 Id: workItemId,
                 Title: "Investigate flaky deployment",
                 State: "New",
@@ -52,14 +53,17 @@ public sealed class ReadWorkItemToolTests
                 ParentWorkItemId: 1,
                 ChildWorkItemIds: new[] { 2, 3 },
                 RelatedWorkItemIds: new[] { 99 },
-                Url: $"https://dev.azure.com/test-org/_apis/wit/workItems/{workItemId}"));
+                Url: $"https://dev.azure.com/test-org/_apis/wit/workItems/{workItemId}");
+
+            return Task.FromResult(new ReadWorkItemResult(workItem));
+        }
     }
 
     private sealed class SpyClient : IAzureDevOpsWorkItemClient
     {
         public int Calls { get; private set; }
 
-        public Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int workItemId, CancellationToken cancellationToken = default)
+        public Task<ReadWorkItemResult> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
         {
             Calls++;
             throw new InvalidOperationException("Client should not be called when configuration is missing.");

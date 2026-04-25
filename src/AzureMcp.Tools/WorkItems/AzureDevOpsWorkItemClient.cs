@@ -7,14 +7,18 @@ using AzureMcp.Tools.Configuration;
 
 namespace AzureMcp.Tools.WorkItems;
 
-public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient, IAzureDevOpsConnectionState connectionState) : IAzureDevOpsWorkItemClient
+public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDevOpsWorkItemClient
 {
-    public async Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int workItemId, CancellationToken cancellationToken = default)
+    public async Task<ReadWorkItemResult> ReadWorkItemAsync(
+        AzureDevOpsConnectionInfo connection,
+        int workItemId,
+        CancellationToken cancellationToken = default)
     {
         if (workItemId <= 0)
-            throw new ArgumentOutOfRangeException(nameof(workItemId), workItemId, "Work item id must be greater than zero.");
+            return ReadWorkItemResult.AsError(
+                "workItemId must be greater than zero",
+                new Dictionary<string, string> { ["workItemId"] = workItemId.ToString() });
 
-        var connection = connectionState.GetRequired();
         var requestUrl = $"{connection.OrganizationUrl}/_apis/wit/workitems/{workItemId}?$expand=all&api-version=7.1";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
@@ -22,18 +26,107 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient, IAzureDevOp
         var token = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{connection.PersonalAccessToken}"));
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
 
-        using var response = await httpClient.SendAsync(request, cancellationToken)
-            .ConfigureAwait(false);
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ReadWorkItemResult.AsError(
+                "Azure DevOps request failed (network/infrastructure error)",
+                new Dictionary<string, string>
+                {
+                    ["workItemId"] = workItemId.ToString(),
+                    ["url"] = requestUrl,
+                    ["exception"] = ex.GetType().Name,
+                    ["message"] = ex.Message
+                });
+        }
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
-            throw new AzureDevOpsWorkItemNotFoundException(workItemId);
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return ReadWorkItemResult.AsError(
+                    "work item not found",
+                    new Dictionary<string, string>
+                    {
+                        ["workItemId"] = workItemId.ToString(),
+                        ["status"] = ((int)response.StatusCode).ToString(),
+                        ["url"] = requestUrl
+                    });
+            }
 
-        response.EnsureSuccessStatusCode();
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                return ReadWorkItemResult.AsError(
+                    "Azure DevOps request not authorized. Ask the user for a valid PAT (and required scopes), then call `configure_connection`.",
+                    new Dictionary<string, string>
+                    {
+                        ["workItemId"] = workItemId.ToString(),
+                        ["status"] = ((int)response.StatusCode).ToString(),
+                        ["url"] = requestUrl
+                    });
+            }
 
-        await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        using var document = await JsonDocument.ParseAsync(contentStream, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await TryReadBodySnippet(response, cancellationToken).ConfigureAwait(false);
+                var details = new Dictionary<string, string>
+                {
+                    ["workItemId"] = workItemId.ToString(),
+                    ["status"] = ((int)response.StatusCode).ToString(),
+                    ["reason"] = response.ReasonPhrase ?? string.Empty,
+                    ["url"] = requestUrl
+                };
 
-        return Parse(document.RootElement);
+                if (!string.IsNullOrWhiteSpace(body))
+                    details["bodySnippet"] = body;
+
+                return ReadWorkItemResult.AsError(
+                    $"Azure DevOps request failed ({(int)response.StatusCode} {response.StatusCode})",
+                    details);
+            }
+
+            try
+            {
+                await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+                using var document = await JsonDocument.ParseAsync(contentStream, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                var workItem = Parse(document.RootElement);
+                return new ReadWorkItemResult(workItem);
+            }
+            catch (JsonException ex)
+            {
+                return ReadWorkItemResult.AsError(
+                    "Azure DevOps response could not be parsed as JSON",
+                    new Dictionary<string, string>
+                    {
+                        ["workItemId"] = workItemId.ToString(),
+                        ["url"] = requestUrl,
+                        ["exception"] = ex.GetType().Name,
+                        ["message"] = ex.Message
+                    });
+            }
+        }
+    }
+
+    private static async Task<string?> TryReadBodySnippet(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(body))
+                return null;
+
+            body = body.Replace("\r", string.Empty);
+            return body.Length <= 800 ? body : body[..800];
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     internal static AzureDevOpsWorkItem Parse(JsonElement root)

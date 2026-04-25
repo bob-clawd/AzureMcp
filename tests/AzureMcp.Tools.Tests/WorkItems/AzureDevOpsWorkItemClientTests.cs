@@ -51,9 +51,12 @@ public sealed class AzureDevOpsWorkItemClientTests
         }))
         ;
 
-        IAzureDevOpsConnectionState state = new AzureDevOpsConnectionState("https://dev.azure.com/test-org", "secret-pat", null);
-        var client = new AzureDevOpsWorkItemClient(httpClient, state);
-        var workItem = await client.ReadWorkItemAsync(12345);
+        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
+        var result = await client.ReadWorkItemAsync(connection, 12345);
+
+        Assert.Null(result.Error);
+        var workItem = result.WorkItem!;
 
         Assert.Equal(12345, workItem.Id);
         Assert.Equal("Improve deployment diagnostics", workItem.Title);
@@ -72,10 +75,12 @@ public sealed class AzureDevOpsWorkItemClientTests
     {
         using var httpClient = new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)));
 
-        IAzureDevOpsConnectionState state = new AzureDevOpsConnectionState("https://dev.azure.com/test-org", "secret-pat", null);
-        var client = new AzureDevOpsWorkItemClient(httpClient, state);
+        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
 
-        await Assert.ThrowsAsync<AzureDevOpsWorkItemNotFoundException>(() => client.ReadWorkItemAsync(404));
+        var result = await client.ReadWorkItemAsync(connection, 404);
+        Assert.NotNull(result.Error);
+        Assert.Contains("not found", result.Error!.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler

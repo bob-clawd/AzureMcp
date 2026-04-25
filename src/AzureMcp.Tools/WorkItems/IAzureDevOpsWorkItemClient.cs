@@ -1,6 +1,11 @@
+using AzureMcp.Tools.Configuration;
+
 namespace AzureMcp.Tools.WorkItems;
 
 public interface IAzureDevOpsWorkItemClient
 {
-    Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int workItemId, CancellationToken cancellationToken = default);
+    Task<ReadWorkItemResult> ReadWorkItemAsync(
+        AzureDevOpsConnectionInfo connection,
+        int workItemId,
+        CancellationToken cancellationToken = default);
 }
