@@ -47,9 +47,9 @@ Responsibilities:
 Tests should prefer fakes/stubs over live Azure calls.
 That keeps the suite fast and deterministic.
 
-## Current vertical slice: `read_work_item`
+## Current vertical slices: `read_work_item` + `get_context`
 
-Flow:
+`read_work_item` flow:
 
 1. MCP client calls `read_work_item(id)`
 2. `ReadWorkItemTool` delegates to `IAzureDevOpsWorkItemClient`
@@ -57,7 +57,15 @@ Flow:
 4. response is normalized into a compact structured model
 5. MCP returns that model to the caller
 
-This slice establishes the default pattern for future tools:
+`get_context` builds on the same client, but changes the retrieval shape:
+
+1. MCP client calls `get_context(id)`
+2. tool resolves the current item
+3. tool walks upward to the topmost parent
+4. tool traverses downward through child links
+5. MCP returns one stable parent-to-children context list
+
+These slices establish the default pattern for future tools:
 
 - thin MCP tool
 - dedicated integration client

@@ -11,11 +11,11 @@ The goal is a small, composable toolbelt with a familiar architecture:
 - `AzureMcp.Tools` for tool implementations and Azure DevOps integration
 - `AzureMcp.Tools.Tests` for fast unit tests around parsing, options, and tool behavior
 
-## First vertical slice
+## First tools
 
-The first tool is `read_work_item`.
+The current tools are `read_work_item` and `get_context`.
 
-It accepts a work item id and returns a structured object with the fields that matter first:
+`read_work_item` accepts a work item id and returns a structured object with the fields that matter first:
 
 - id
 - title
@@ -29,6 +29,8 @@ It accepts a work item id and returns a structured object with the fields that m
 - related work item ids
 
 That gives us a real end-to-end slice to shape the architecture before adding more tools.
+
+`get_context` accepts any work item id inside a parent/child hierarchy, walks upward to the topmost parent, then returns the vertical context in stable order from parent to children.
 
 ## Configuration
 
@@ -66,6 +68,40 @@ Input:
 ```json
 {
   "workItemId": 12345
+}
+```
+
+## Tool: `get_context`
+
+Input:
+
+```json
+{
+  "workItemId": 12345
+}
+```
+
+Example response shape:
+
+```json
+{
+  "rootWorkItemId": 100,
+  "items": [
+    {
+      "id": 100,
+      "level": 0,
+      "title": "Parent feature",
+      "workItemType": "Feature",
+      "descriptionText": "High-level context"
+    },
+    {
+      "id": 12345,
+      "level": 1,
+      "title": "Bug in child item",
+      "workItemType": "Bug",
+      "descriptionText": "Concrete problem"
+    }
+  ]
 }
 ```
 
