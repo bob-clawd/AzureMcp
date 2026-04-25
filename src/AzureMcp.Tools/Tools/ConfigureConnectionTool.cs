@@ -47,10 +47,6 @@ public sealed class ConfigureConnectionTool(IAzureDevOpsConnectionState state) :
         var patSet = pat is not null;
         var projSet = proj is not null;
 
-        if (orgSet) Environment.SetEnvironmentVariable("AZURE_MCP_ORGANIZATION_URL", org);
-        if (patSet) Environment.SetEnvironmentVariable("AZURE_MCP_PAT", pat);
-        if (projSet) Environment.SetEnvironmentVariable("AZURE_MCP_PROJECT", proj);
-
         return Task.FromResult(new ConfigureConnectionResponse(
             OrganizationUrlSet: orgSet,
             PersonalAccessTokenSet: patSet,

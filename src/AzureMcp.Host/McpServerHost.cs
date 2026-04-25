@@ -22,9 +22,6 @@ public static class McpServerHost
         ArgumentNullException.ThrowIfNull(environmentVariables);
 
         string? configPath = null;
-        string? organizationUrl = null;
-        string? project = null;
-        string? personalAccessToken = null;
 
         for (var index = 0; index < args.Length; index++)
         {
@@ -34,17 +31,8 @@ public static class McpServerHost
                 case "--config":
                     configPath = ReadSingleValueArgument(args, ref index, argument, configPath);
                     break;
-                case "--organization-url":
-                    organizationUrl = ReadSingleValueArgument(args, ref index, argument, organizationUrl);
-                    break;
-                case "--project":
-                    project = ReadSingleValueArgument(args, ref index, argument, project);
-                    break;
-                case "--pat":
-                    personalAccessToken = ReadSingleValueArgument(args, ref index, argument, personalAccessToken);
-                    break;
                 default:
-                    throw new ArgumentException($"Unknown argument '{argument}'. Expected '--config <path>' plus optional '--organization-url <url>' '--pat <token>' and '--project <name>'.", nameof(args));
+                    throw new ArgumentException($"Unknown argument '{argument}'. Expected '--config <path>'.", nameof(args));
             }
         }
 
@@ -53,28 +41,9 @@ public static class McpServerHost
 
         configPath = Path.GetFullPath(configPath);
 
-        organizationUrl ??= environmentVariables["AZURE_MCP_ORGANIZATION_URL"] as string;
-        project ??= environmentVariables["AZURE_MCP_PROJECT"] as string;
-        personalAccessToken ??= environmentVariables["AZURE_MCP_PAT"] as string;
-
-        string? normalizedOrganizationUrl = null;
-        if (!string.IsNullOrWhiteSpace(organizationUrl))
-        {
-            if (!Uri.TryCreate(organizationUrl, UriKind.Absolute, out var parsedOrganizationUrl)
-                || (parsedOrganizationUrl.Scheme != Uri.UriSchemeHttps && parsedOrganizationUrl.Scheme != Uri.UriSchemeHttp))
-            {
-                throw new ArgumentException($"Invalid organization URL '{organizationUrl}'.", nameof(args));
-            }
-
-            normalizedOrganizationUrl = parsedOrganizationUrl.ToString().TrimEnd('/');
-        }
-
         return new AzureMcpOptions
         {
             ConfigPath = configPath,
-            OrganizationUrl = normalizedOrganizationUrl,
-            Project = string.IsNullOrWhiteSpace(project) ? null : project.Trim(),
-            PersonalAccessToken = string.IsNullOrWhiteSpace(personalAccessToken) ? null : personalAccessToken.Trim()
         };
     }
 

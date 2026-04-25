@@ -32,56 +32,27 @@ That gives us a real end-to-end slice to shape the architecture before adding mo
 
 ## Configuration
 
-AzureMcp requires a config file path on startup and can then read connection settings from:
+AzureMcp requires a config file path on startup.
+The **config file is the source of truth** for the Azure DevOps connection.
 
-1) command-line arguments
-2) config file
-3) environment variables
-
-Command-line arguments win.
-
-If required values are missing when you call a tool, the server will fail the call with a message that is meant to be actionable for an agent:
-ask the user for the missing value(s), then call `configure_connection`.
+If required values are missing when you call a tool, the server returns an actionable error:
+ask the user for the missing value(s), then call `configure_connection` to write the config file.
 
 ### Required
 
 - `--config <path>` (required)
 
-- `--organization-url` or `AZURE_MCP_ORGANIZATION_URL`
-- `--pat` or `AZURE_MCP_PAT`
-
-### Optional
-
-- `--project` or `AZURE_MCP_PROJECT`
-
-`project` is already part of the server configuration because it will likely matter for later tools, even though `read_work_item` itself only needs the organization and PAT.
-
 ### Tool: `configure_connection`
 
-You can also set/update the connection values at runtime (for the current MCP server process) via:
+You can set/update the connection values by writing/updating the config file via:
 
 - `configure_connection(organizationUrl?, personalAccessToken?, project?)`
 
 ## Run locally
 
 ```bash
-export AZURE_MCP_ORGANIZATION_URL="https://dev.azure.com/your-org"
-export AZURE_MCP_PAT="your-pat"
-export AZURE_MCP_PROJECT="your-project" # optional
-
 export PATH="$PATH:/home/bob/.dotnet"
 dotnet run -c Release --project src/AzureMcp.Host/AzureMcp.Host.csproj -- --config ~/.config/azuremcp/config.json
-```
-
-Or with explicit arguments:
-
-```bash
-export PATH="$PATH:/home/bob/.dotnet"
-dotnet run -c Release --project src/AzureMcp.Host/AzureMcp.Host.csproj -- \
-  --config ~/.config/azuremcp/config.json \
-  --organization-url "https://dev.azure.com/your-org" \
-  --pat "your-pat" \
-  --project "your-project"
 ```
 
 ## Tool: `read_work_item`

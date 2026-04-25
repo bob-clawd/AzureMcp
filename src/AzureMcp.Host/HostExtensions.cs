@@ -16,7 +16,7 @@ public static class HostExtensions
         ?? "0.0.0";
 
     internal static IServiceCollection Compose(this IServiceCollection services, AzureMcpOptions options) => services
-        .WithAzureMcp(options.ConfigPath, options.OrganizationUrl, options.PersonalAccessToken, options.Project)
+        .WithAzureMcp(options.ConfigPath)
         .AddMcpRuntime();
 
     private static IServiceCollection AddMcpRuntime(this IServiceCollection services)

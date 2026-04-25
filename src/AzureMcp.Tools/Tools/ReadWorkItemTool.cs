@@ -18,9 +18,9 @@ public sealed record ReadWorkItemResponse(
     IReadOnlyList<int> RelatedWorkItemIds,
     string? Url,
     ErrorInfo? Error = null,
-    IReadOnlyList<string>? MissingEnvironmentVariables = null)
+    IReadOnlyList<string>? MissingConfigKeys = null)
 {
-    public static ReadWorkItemResponse AsError(int workItemId, ErrorInfo error, IReadOnlyList<string>? missingEnvironmentVariables = null)
+    public static ReadWorkItemResponse AsError(int workItemId, ErrorInfo error, IReadOnlyList<string>? missingConfigKeys = null)
         => new(
             Id: workItemId,
             Title: null,
@@ -34,7 +34,7 @@ public sealed record ReadWorkItemResponse(
             RelatedWorkItemIds: Array.Empty<int>(),
             Url: null,
             Error: error,
-            MissingEnvironmentVariables: missingEnvironmentVariables);
+            MissingConfigKeys: missingConfigKeys);
 }
 
 public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDevOpsConnectionState connectionState) : Tool

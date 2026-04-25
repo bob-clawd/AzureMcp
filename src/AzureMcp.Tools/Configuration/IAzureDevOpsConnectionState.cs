@@ -9,7 +9,7 @@ public interface IAzureDevOpsConnectionState
     bool TryGetRequired(
         out AzureDevOpsConnectionInfo connection,
         out ErrorInfo? error,
-        out IReadOnlyList<string>? missingEnvironmentVariables);
+        out IReadOnlyList<string>? missingConfigKeys);
 
     bool TryPersist(out ErrorInfo? error);
 

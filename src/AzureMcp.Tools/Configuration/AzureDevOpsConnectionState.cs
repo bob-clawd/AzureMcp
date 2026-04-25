@@ -10,13 +10,13 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
     private string? _personalAccessToken;
     private string? _project;
 
-    public AzureDevOpsConnectionState(string configPath, string? organizationUrl, string? personalAccessToken, string? project)
+    public AzureDevOpsConnectionState(string configPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(configPath);
         ConfigPath = Path.GetFullPath(configPath);
-        _organizationUrl = NormalizeUrl(organizationUrl);
-        _personalAccessToken = NormalizeString(personalAccessToken);
-        _project = NormalizeString(project);
+        _organizationUrl = null;
+        _personalAccessToken = null;
+        _project = null;
     }
 
     public void Set(string? organizationUrl, string? personalAccessToken, string? project)
@@ -40,43 +40,32 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
     public bool TryGetRequired(
         out AzureDevOpsConnectionInfo connection,
         out ErrorInfo? error,
-        out IReadOnlyList<string>? missingEnvironmentVariables)
+        out IReadOnlyList<string>? missingConfigKeys)
     {
         lock (_gate)
         {
-            var org = _organizationUrl;
-            var pat = _personalAccessToken;
-            var project = _project;
-
-            if (org is null || pat is null || project is null)
+            var configRead = TryReadConfigFile();
+            if (configRead.Error is not null)
             {
-                var configRead = TryReadConfigFile();
-                if (configRead.Error is not null)
-                {
-                    connection = default!;
-                    error = configRead.Error;
-                    missingEnvironmentVariables = null;
-                    return false;
-                }
-
-                org ??= NormalizeUrl(configRead.OrganizationUrl);
-                pat ??= NormalizeString(configRead.PersonalAccessToken);
-                project ??= NormalizeString(configRead.Project);
+                connection = default!;
+                error = configRead.Error;
+                missingConfigKeys = null;
+                return false;
             }
 
-            org ??= NormalizeUrl(Environment.GetEnvironmentVariable("AZURE_MCP_ORGANIZATION_URL"));
-            pat ??= NormalizeString(Environment.GetEnvironmentVariable("AZURE_MCP_PAT"));
-            project ??= NormalizeString(Environment.GetEnvironmentVariable("AZURE_MCP_PROJECT"));
+            var org = NormalizeUrl(configRead.OrganizationUrl);
+            var pat = NormalizeString(configRead.PersonalAccessToken);
+            var project = NormalizeString(configRead.Project);
 
             var missing = new List<string>();
-            if (string.IsNullOrWhiteSpace(org)) missing.Add("AZURE_MCP_ORGANIZATION_URL");
-            if (string.IsNullOrWhiteSpace(pat)) missing.Add("AZURE_MCP_PAT");
+            if (string.IsNullOrWhiteSpace(org)) missing.Add("organizationUrl");
+            if (string.IsNullOrWhiteSpace(pat)) missing.Add("personalAccessToken");
 
             if (missing.Count > 0)
             {
                 connection = default!;
-                error = AzureMcpErrors.MissingConfig(missing);
-                missingEnvironmentVariables = missing;
+                error = AzureMcpErrors.MissingConfig(ConfigPath, missing);
+                missingConfigKeys = missing;
                 return false;
             }
 
@@ -86,7 +75,7 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
                 Project: project);
 
             error = null;
-            missingEnvironmentVariables = null;
+            missingConfigKeys = null;
             return true;
         }
     }

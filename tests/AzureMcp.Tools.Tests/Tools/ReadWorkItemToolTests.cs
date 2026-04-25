@@ -32,10 +32,10 @@ public sealed class ReadWorkItemToolTests
 
         Assert.NotNull(result.Error);
         Assert.Contains("Missing:", result.Error!.Message);
-        Assert.Contains("AZURE_MCP_PAT", result.Error!.Message);
-        Assert.Contains("AZURE_MCP_ORGANIZATION_URL", result.Error!.Message);
+        Assert.Contains("organizationUrl", result.Error!.Message);
+        Assert.Contains("personalAccessToken", result.Error!.Message);
         Assert.Contains("configure_connection", result.Error!.Message);
-        Assert.Equal(new[] { "AZURE_MCP_ORGANIZATION_URL", "AZURE_MCP_PAT" }, result.MissingEnvironmentVariables);
+        Assert.Equal(new[] { "organizationUrl", "personalAccessToken" }, result.MissingConfigKeys);
         Assert.Equal(0, client.Calls);
     }
 
@@ -75,11 +75,11 @@ public sealed class ReadWorkItemToolTests
     {
         public AzureDevOpsConnectionInfo GetRequired() => new("https://dev.azure.com/test-org", "pat", null);
 
-        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error, out IReadOnlyList<string>? missingEnvironmentVariables)
+        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error, out IReadOnlyList<string>? missingConfigKeys)
         {
             connection = GetRequired();
             error = null;
-            missingEnvironmentVariables = null;
+            missingConfigKeys = null;
             return true;
         }
 
@@ -98,11 +98,11 @@ public sealed class ReadWorkItemToolTests
     {
         public AzureDevOpsConnectionInfo GetRequired() => throw new InvalidOperationException();
 
-        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error, out IReadOnlyList<string>? missingEnvironmentVariables)
+        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error, out IReadOnlyList<string>? missingConfigKeys)
         {
             connection = default!;
-            missingEnvironmentVariables = new[] { "AZURE_MCP_ORGANIZATION_URL", "AZURE_MCP_PAT" };
-            error = AzureMcpErrors.MissingConfig(missingEnvironmentVariables);
+            missingConfigKeys = new[] { "organizationUrl", "personalAccessToken" };
+            error = AzureMcpErrors.MissingConfig(ConfigPath, missingConfigKeys);
             return false;
         }
 
