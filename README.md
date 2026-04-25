@@ -25,6 +25,8 @@ The current tools are `read_work_item` and `get_context`.
 - work item type
 - parentId (when present)
 - childrenIds
+- branches
+- pullRequestIds
 
 That gives us a real end-to-end slice to shape the architecture before adding more tools.
 
@@ -112,7 +114,9 @@ Example response shape:
     "descriptionText": "Investigate missing logs during deployment.",
     "assignedTo": "Ada Lovelace",
     "parentId": 100,
-    "childrenIds": [200, 201]
+    "childrenIds": [200, 201],
+    "branches": ["feature/ado-12345"],
+    "pullRequestIds": [33]
   },
   "error": null
 }

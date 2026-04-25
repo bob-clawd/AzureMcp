@@ -14,4 +14,6 @@ public sealed record Ticket(
     string? DescriptionText,
     string? AssignedTo,
     int? ParentId,
-    IReadOnlyList<int> ChildrenIds);
+    IReadOnlyList<int> ChildrenIds,
+    IReadOnlyList<string> Branches,
+    IReadOnlyList<int> PullRequestIds);

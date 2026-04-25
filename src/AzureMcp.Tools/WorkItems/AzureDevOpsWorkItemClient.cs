@@ -142,6 +142,8 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         var relations = root.TryGetProperty("relations", out var relationsElement) ? relationsElement : default;
         var parentId = TryGetLinkedWorkItemId(relations, "System.LinkTypes.Hierarchy-Reverse");
         var childIds = GetLinkedWorkItemIds(relations, "System.LinkTypes.Hierarchy-Forward");
+        var branches = GetLinkedGitBranches(relations);
+        var pullRequestIds = GetLinkedPullRequestIds(relations);
         return new Ticket(
             Id: root.GetProperty("id").GetInt32(),
             Title: GetString(fields, "System.Title"),
@@ -150,7 +152,114 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             DescriptionText: ToPlainText(descriptionHtml),
             AssignedTo: ParseAssignedTo(fields),
             ParentId: parentId,
-            ChildrenIds: childIds);
+            ChildrenIds: childIds,
+            Branches: branches,
+            PullRequestIds: pullRequestIds);
+    }
+
+    private static IReadOnlyList<string> GetLinkedGitBranches(JsonElement relations)
+    {
+        if (relations.ValueKind != JsonValueKind.Array)
+            return Array.Empty<string>();
+
+        var branches = new List<string>();
+
+        foreach (var relation in relations.EnumerateArray())
+        {
+            if (!TryGetRelationUrl(relation, "ArtifactLink", out var url))
+                continue;
+
+            var branch = TryParseGitBranchFromArtifactUrl(url);
+            if (!string.IsNullOrWhiteSpace(branch))
+                branches.Add(branch);
+        }
+
+        return branches
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static x => x, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<int> GetLinkedPullRequestIds(JsonElement relations)
+    {
+        if (relations.ValueKind != JsonValueKind.Array)
+            return Array.Empty<int>();
+
+        var ids = new List<int>();
+
+        foreach (var relation in relations.EnumerateArray())
+        {
+            if (!TryGetRelationUrl(relation, "ArtifactLink", out var url))
+                continue;
+
+            var id = TryParsePullRequestIdFromArtifactUrl(url);
+            if (id is not null)
+                ids.Add(id.Value);
+        }
+
+        return ids
+            .Distinct()
+            .OrderBy(static x => x)
+            .ToArray();
+    }
+
+    private static bool TryGetRelationUrl(JsonElement relation, string expectedRel, out string? url)
+    {
+        url = null;
+
+        if (!relation.TryGetProperty("rel", out var relElement))
+            return false;
+
+        if (!string.Equals(relElement.GetString(), expectedRel, StringComparison.Ordinal))
+            return false;
+
+        if (!relation.TryGetProperty("url", out var urlElement))
+            return false;
+
+        url = urlElement.GetString();
+        return !string.IsNullOrWhiteSpace(url);
+    }
+
+    private static int? TryParsePullRequestIdFromArtifactUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return null;
+
+        const string prefix = "vstfs:///Git/PullRequestId/";
+        if (!url.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var tail = Uri.UnescapeDataString(url[prefix.Length..]);
+        var parts = tail.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return null;
+
+        return int.TryParse(parts[^1], out var id) ? id : null;
+    }
+
+    private static string? TryParseGitBranchFromArtifactUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return null;
+
+        const string prefix = "vstfs:///Git/Ref/";
+        if (!url.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var tail = Uri.UnescapeDataString(url[prefix.Length..]);
+        var parts = tail.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return null;
+
+        var refName = parts.Length >= 3
+            ? string.Join('/', parts.Skip(2))
+            : parts[^1];
+
+        const string heads = "refs/heads/";
+        if (refName.StartsWith(heads, StringComparison.OrdinalIgnoreCase))
+            return refName[heads.Length..];
+
+        return refName;
     }
 
     private static int? TryGetLinkedWorkItemId(JsonElement relations, string relType)

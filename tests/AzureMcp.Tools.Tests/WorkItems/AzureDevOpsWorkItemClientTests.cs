@@ -29,6 +29,20 @@ public sealed class AzureDevOpsWorkItemClientTests
             {
               "rel": "System.LinkTypes.Related",
               "url": "https://dev.azure.com/test-org/_apis/wit/workItems/300"
+            },
+            {
+              "rel": "ArtifactLink",
+              "url": "vstfs:///Git/Ref/11111111-1111-1111-1111-111111111111%2F22222222-2222-2222-2222-222222222222%2Frefs%2Fheads%2Ffeature%2Fado-12345",
+              "attributes": {
+                "name": "Branch"
+              }
+            },
+            {
+              "rel": "ArtifactLink",
+              "url": "vstfs:///Git/PullRequestId/11111111-1111-1111-1111-111111111111%2F22222222-2222-2222-2222-222222222222%2F33",
+              "attributes": {
+                "name": "Pull Request"
+              }
             }
           ],
           "fields": {
@@ -65,6 +79,8 @@ public sealed class AzureDevOpsWorkItemClientTests
         ticket.DescriptionText.Is("Investigate missing logs during deployment.\n\nCheck retention.");
         ticket.ParentId.Is(100);
         ticket.ChildrenIds.Is([200, 201]);
+        ticket.Branches.Is(["feature/ado-12345"]);
+        ticket.PullRequestIds.Is([33]);
     }
 
     [Fact]

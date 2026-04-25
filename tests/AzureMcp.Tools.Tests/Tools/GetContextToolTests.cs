@@ -71,7 +71,9 @@ public sealed class GetContextToolTests
                 DescriptionText: "Root description",
                 AssignedTo: null,
                 ParentId: null,
-                ChildrenIds: [2, 4]),
+                ChildrenIds: [2, 4],
+                Branches: Array.Empty<string>(),
+                PullRequestIds: Array.Empty<int>()),
             [2] = new(
                 Id: 2,
                 Title: "Child",
@@ -80,7 +82,9 @@ public sealed class GetContextToolTests
                 DescriptionText: "Child description",
                 AssignedTo: null,
                 ParentId: 1,
-                ChildrenIds: [3]),
+                ChildrenIds: [3],
+                Branches: Array.Empty<string>(),
+                PullRequestIds: Array.Empty<int>()),
             [3] = new(
                 Id: 3,
                 Title: "Grandchild",
@@ -89,7 +93,9 @@ public sealed class GetContextToolTests
                 DescriptionText: "Grandchild description",
                 AssignedTo: null,
                 ParentId: 2,
-                ChildrenIds: []),
+                ChildrenIds: [],
+                Branches: Array.Empty<string>(),
+                PullRequestIds: Array.Empty<int>()),
             [4] = new(
                 Id: 4,
                 Title: "Sibling",
@@ -98,7 +104,9 @@ public sealed class GetContextToolTests
                 DescriptionText: "Sibling description",
                 AssignedTo: null,
                 ParentId: 1,
-                ChildrenIds: [])
+                ChildrenIds: [],
+                Branches: Array.Empty<string>(),
+                PullRequestIds: Array.Empty<int>())
         };
 
         public Task<(Ticket? Ticket, ErrorInfo? Error)> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)

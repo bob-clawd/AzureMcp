@@ -52,7 +52,9 @@ public sealed class ReadWorkItemToolTests
                 DescriptionText: "Look at the failed release logs.",
                 AssignedTo: "Grace Hopper",
                 ParentId: 1,
-                ChildrenIds: new[] { 2, 3 });
+                ChildrenIds: new[] { 2, 3 },
+                Branches: Array.Empty<string>(),
+                PullRequestIds: Array.Empty<int>());
 
             return Task.FromResult<(Ticket? Ticket, ErrorInfo? Error)>((ticket, null));
         }
