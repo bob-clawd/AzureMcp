@@ -20,7 +20,7 @@ public sealed record ReadWorkItemResponse(
     ErrorInfo? Error = null,
     IReadOnlyList<string>? MissingEnvironmentVariables = null)
 {
-    public static ReadWorkItemResponse AsError(int workItemId, string message, IReadOnlyList<string>? missingEnvironmentVariables = null)
+    public static ReadWorkItemResponse AsError(int workItemId, ErrorInfo error, IReadOnlyList<string>? missingEnvironmentVariables = null)
         => new(
             Id: workItemId,
             Title: null,
@@ -33,7 +33,7 @@ public sealed record ReadWorkItemResponse(
             ChildWorkItemIds: Array.Empty<int>(),
             RelatedWorkItemIds: Array.Empty<int>(),
             Url: null,
-            Error: new ErrorInfo(message),
+            Error: error,
             MissingEnvironmentVariables: missingEnvironmentVariables);
 }
 
@@ -46,7 +46,7 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDe
         CancellationToken cancellationToken = default)
     {
         if (!connectionState.TryGetRequired(out _, out var missing))
-            return ReadWorkItemResponse.AsError(workItemId, BuildMissingConfigMessage(missing), missing);
+            return ReadWorkItemResponse.AsError(workItemId, AzureMcpErrors.MissingConfig(missing), missing);
 
         var workItem = await client.ReadWorkItemAsync(workItemId, cancellationToken).ConfigureAwait(false);
 
@@ -62,11 +62,5 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDe
             ChildWorkItemIds: workItem.ChildWorkItemIds,
             RelatedWorkItemIds: workItem.RelatedWorkItemIds,
             Url: workItem.Url);
-    }
-
-    private static string BuildMissingConfigMessage(IReadOnlyList<string> missing)
-    {
-        var keys = string.Join(", ", missing);
-        return $"AzureMcp is not configured. Missing: {keys}. Ask the user for the value(s), then call `configure_connection` with the provided values.";
     }
 }

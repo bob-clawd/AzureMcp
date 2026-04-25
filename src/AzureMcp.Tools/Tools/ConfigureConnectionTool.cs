@@ -8,7 +8,11 @@ public sealed record ConfigureConnectionResponse(
     bool OrganizationUrlSet,
     bool PersonalAccessTokenSet,
     bool ProjectSet,
-    string? Error);
+    ErrorInfo? Error = null)
+{
+    public static ConfigureConnectionResponse AsError(string message)
+        => new(false, false, false, new ErrorInfo(message));
+}
 
 public sealed class ConfigureConnectionTool(IAzureDevOpsConnectionState state) : Tool
 {
@@ -28,11 +32,8 @@ public sealed class ConfigureConnectionTool(IAzureDevOpsConnectionState state) :
 
         if (org is not null && (!Uri.TryCreate(org, UriKind.Absolute, out var parsed) || (parsed.Scheme != Uri.UriSchemeHttps && parsed.Scheme != Uri.UriSchemeHttp)))
         {
-            return Task.FromResult(new ConfigureConnectionResponse(
-                OrganizationUrlSet: false,
-                PersonalAccessTokenSet: false,
-                ProjectSet: false,
-                Error: $"Invalid organizationUrl '{org}'. Expected an absolute http/https URL."));
+            return Task.FromResult(ConfigureConnectionResponse.AsError(
+                $"Invalid organizationUrl '{org}'. Expected an absolute http/https URL."));
         }
 
         org = org?.TrimEnd('/');
