@@ -4,10 +4,5 @@ public interface IAzureDevOpsConnectionState
 {
     string ConfigPath { get; }
 
-    AzureDevOpsConnectionInfo GetRequired();
-
-    bool TryGetRequired(
-        out AzureDevOpsConnectionInfo connection,
-        out ErrorInfo? error,
-        out IReadOnlyList<string>? missingConfigKeys);
+    bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error);
 }

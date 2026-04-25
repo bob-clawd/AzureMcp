@@ -10,25 +10,13 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
         ConfigPath = Path.GetFullPath(configPath);
     }
 
-    public AzureDevOpsConnectionInfo GetRequired()
-    {
-        if (TryGetRequired(out var connection, out _, out _))
-            return connection;
-
-        throw new InvalidOperationException("Configuration is missing. Use TryGetRequired to get the actionable error.");
-    }
-
-    public bool TryGetRequired(
-        out AzureDevOpsConnectionInfo connection,
-        out ErrorInfo? error,
-        out IReadOnlyList<string>? missingConfigKeys)
+    public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error)
     {
         var configRead = TryReadConfigFile();
         if (configRead.Error is not null)
         {
             connection = default!;
             error = configRead.Error;
-            missingConfigKeys = null;
             return false;
         }
 
@@ -48,7 +36,6 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
                     ["path"] = ConfigPath,
                     ["organizationUrl"] = org
                 });
-            missingConfigKeys = null;
             return false;
         }
 
@@ -60,7 +47,6 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
         {
             connection = default!;
             error = AzureMcpErrors.MissingConfig(ConfigPath, missing);
-            missingConfigKeys = missing;
             return false;
         }
 
@@ -70,7 +56,6 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
             Project: project);
 
         error = null;
-        missingConfigKeys = null;
         return true;
     }
 

@@ -17,10 +17,9 @@ public sealed record ReadWorkItemResponse(
     IReadOnlyList<int> ChildWorkItemIds,
     IReadOnlyList<int> RelatedWorkItemIds,
     string? Url,
-    ErrorInfo? Error = null,
-    IReadOnlyList<string>? MissingConfigKeys = null)
+    ErrorInfo? Error = null)
 {
-    public static ReadWorkItemResponse AsError(int workItemId, ErrorInfo error, IReadOnlyList<string>? missingConfigKeys = null)
+    public static ReadWorkItemResponse AsError(int workItemId, ErrorInfo error)
         => new(
             Id: workItemId,
             Title: null,
@@ -33,8 +32,7 @@ public sealed record ReadWorkItemResponse(
             ChildWorkItemIds: Array.Empty<int>(),
             RelatedWorkItemIds: Array.Empty<int>(),
             Url: null,
-            Error: error,
-            MissingConfigKeys: missingConfigKeys);
+            Error: error);
 }
 
 public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDevOpsConnectionState connectionState) : Tool
@@ -45,8 +43,8 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDe
         [Description("Azure DevOps work item id.")] int workItemId,
         CancellationToken cancellationToken = default)
     {
-        if (!connectionState.TryGetRequired(out var connection, out var error, out var missing))
-            return ReadWorkItemResponse.AsError(workItemId, error!, missing);
+        if (!connectionState.TryGetRequired(out var connection, out var error))
+            return ReadWorkItemResponse.AsError(workItemId, error!);
 
         var result = await client.ReadWorkItemAsync(connection, workItemId, cancellationToken).ConfigureAwait(false);
         if (result.Error is not null)

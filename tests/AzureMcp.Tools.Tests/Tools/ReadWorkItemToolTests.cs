@@ -35,7 +35,6 @@ public sealed class ReadWorkItemToolTests
         Assert.Contains("organizationUrl", result.Error!.Message);
         Assert.Contains("personalAccessToken", result.Error!.Message);
         Assert.Contains("config file", result.Error!.Message);
-        Assert.Equal(new[] { "organizationUrl", "personalAccessToken" }, result.MissingConfigKeys);
         Assert.Equal(0, client.Calls);
     }
 
@@ -73,13 +72,10 @@ public sealed class ReadWorkItemToolTests
 
     private sealed class ConfiguredState : IAzureDevOpsConnectionState
     {
-        public AzureDevOpsConnectionInfo GetRequired() => new("https://dev.azure.com/test-org", "pat", null);
-
-        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error, out IReadOnlyList<string>? missingConfigKeys)
+        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error)
         {
-            connection = GetRequired();
+            connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "pat", null);
             error = null;
-            missingConfigKeys = null;
             return true;
         }
 
@@ -88,13 +84,10 @@ public sealed class ReadWorkItemToolTests
 
     private sealed class MissingState : IAzureDevOpsConnectionState
     {
-        public AzureDevOpsConnectionInfo GetRequired() => throw new InvalidOperationException();
-
-        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error, out IReadOnlyList<string>? missingConfigKeys)
+        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error)
         {
             connection = default!;
-            missingConfigKeys = new[] { "organizationUrl", "personalAccessToken" };
-            error = AzureMcpErrors.MissingConfig(ConfigPath, missingConfigKeys);
+            error = AzureMcpErrors.MissingConfig(ConfigPath, ["organizationUrl", "personalAccessToken"]);
             return false;
         }
 
