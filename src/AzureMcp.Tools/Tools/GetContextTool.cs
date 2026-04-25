@@ -5,22 +5,13 @@ using ModelContextProtocol.Server;
 
 namespace AzureMcp.Tools.Tools;
 
-public sealed record WorkItemContextEntry(
-    int Id,
-    int Level,
-    string? Title,
-    string? State,
-    string? WorkItemType,
-    string? DescriptionText,
-    string? Url);
-
 public sealed record GetContextResponse(
     int RootWorkItemId,
-    IReadOnlyList<WorkItemContextEntry> Items,
+    IReadOnlyList<Ticket> Items,
     ErrorInfo? Error = null)
 {
     public static GetContextResponse AsError(ErrorInfo error)
-        => new(0, Array.Empty<WorkItemContextEntry>(), error);
+        => new(0, Array.Empty<Ticket>(), error);
 }
 
 public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevOpsConnectionState connectionState) : Tool
@@ -39,7 +30,7 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         if (rootResult.Error is not null)
             return GetContextResponse.AsError(rootResult.Error);
 
-        var entries = new List<WorkItemContextEntry>();
+        var entries = new List<Ticket>();
         var visited = new HashSet<int>();
 
         var traversalResult = await TraverseAsync(
@@ -93,7 +84,7 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         int level,
         IDictionary<int, AzureDevOpsWorkItem> cache,
         ISet<int> visited,
-        ICollection<WorkItemContextEntry> entries,
+        ICollection<Ticket> entries,
         CancellationToken cancellationToken)
     {
         if (!visited.Add(workItemId))
@@ -104,14 +95,7 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
             return result.Error;
 
         var workItem = result.WorkItem!;
-        entries.Add(new WorkItemContextEntry(
-            Id: workItem.Id,
-            Level: level,
-            Title: workItem.Title,
-            State: workItem.State,
-            WorkItemType: workItem.WorkItemType,
-            DescriptionText: workItem.DescriptionText,
-            Url: workItem.Url));
+        entries.Add(Ticket.FromWorkItem(workItem, level));
 
         foreach (var childId in workItem.ChildWorkItemIds)
         {
