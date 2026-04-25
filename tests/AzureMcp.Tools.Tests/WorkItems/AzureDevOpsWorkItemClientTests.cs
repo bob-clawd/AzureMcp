@@ -55,17 +55,17 @@ public sealed class AzureDevOpsWorkItemClientTests
         var result = await client.ReadWorkItemAsync(connection, 12345);
 
         result.Error.IsNull();
-        var workItem = result.WorkItem!;
+        var ticket = result.Ticket!;
 
-        workItem.Id.Is(12345);
-        workItem.Title.Is("Improve deployment diagnostics");
-        workItem.State.Is("Active");
-        workItem.WorkItemType.Is("User Story");
-        workItem.AssignedTo?.DisplayName.Is("Ada Lovelace");
-        workItem.AssignedTo?.UniqueName.Is("ada@example.com");
-        workItem.DescriptionText.Is("Investigate missing logs during deployment.\n\nCheck retention.");
-        workItem.ParentWorkItemId.Is(100);
-        workItem.ChildWorkItemIds.Is([200, 201]);
+        ticket.Id.Is(12345);
+        ticket.Title.Is("Improve deployment diagnostics");
+        ticket.State.Is("Active");
+        ticket.WorkItemType.Is("User Story");
+        ticket.AssignedTo?.DisplayName.Is("Ada Lovelace");
+        ticket.AssignedTo?.UniqueName.Is("ada@example.com");
+        ticket.DescriptionText.Is("Investigate missing logs during deployment.\n\nCheck retention.");
+        ticket.ParentTicketId.Is(100);
+        ticket.ChildTicketIds.Is([200, 201]);
     }
 
     [Fact]

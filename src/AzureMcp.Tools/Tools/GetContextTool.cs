@@ -24,7 +24,7 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         if (!connectionState.TryGetRequired(out var connection, out var error))
             return GetContextResponse.AsError(error!);
 
-        var cache = new Dictionary<int, AzureDevOpsWorkItem>();
+        var cache = new Dictionary<int, Ticket>();
         var rootResult = await FindRootAsync(connection, workItemId, cache, cancellationToken).ConfigureAwait(false);
         if (rootResult.Error is not null)
             return GetContextResponse.AsError(rootResult.Error);
@@ -46,10 +46,10 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         return new GetContextResponse(tickets);
     }
 
-    private async Task<(AzureDevOpsWorkItem? Root, ErrorInfo? Error)> FindRootAsync(
+    private async Task<(Ticket? Root, ErrorInfo? Error)> FindRootAsync(
         AzureDevOpsConnectionInfo connection,
         int workItemId,
-        IDictionary<int, AzureDevOpsWorkItem> cache,
+        IDictionary<int, Ticket> cache,
         CancellationToken cancellationToken)
     {
         var currentId = workItemId;
@@ -68,18 +68,18 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
             if (result.Error is not null)
                 return (null, result.Error);
 
-            var current = result.WorkItem!;
-            if (current.ParentWorkItemId is null)
+            var current = result.Ticket!;
+            if (current.ParentTicketId is null)
                 return (current, null);
 
-            currentId = current.ParentWorkItemId.Value;
+            currentId = current.ParentTicketId.Value;
         }
     }
 
     private async Task<ErrorInfo?> TraverseAsync(
         AzureDevOpsConnectionInfo connection,
         int workItemId,
-        IDictionary<int, AzureDevOpsWorkItem> cache,
+        IDictionary<int, Ticket> cache,
         ISet<int> visited,
         ICollection<Ticket> tickets,
         CancellationToken cancellationToken)
@@ -91,10 +91,10 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         if (result.Error is not null)
             return result.Error;
 
-        var workItem = result.WorkItem!;
-        tickets.Add(Ticket.FromWorkItem(workItem));
+        var ticket = result.Ticket!;
+        tickets.Add(ticket);
 
-        foreach (var childId in workItem.ChildWorkItemIds)
+        foreach (var childId in ticket.ChildTicketIds)
         {
             var error = await TraverseAsync(connection, childId, cache, visited, tickets, cancellationToken).ConfigureAwait(false);
             if (error is not null)
@@ -107,15 +107,15 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
     private async Task<ReadWorkItemResult> LoadAsync(
         AzureDevOpsConnectionInfo connection,
         int workItemId,
-        IDictionary<int, AzureDevOpsWorkItem> cache,
+        IDictionary<int, Ticket> cache,
         CancellationToken cancellationToken)
     {
         if (cache.TryGetValue(workItemId, out var cached))
             return new ReadWorkItemResult(cached);
 
         var result = await client.ReadWorkItemAsync(connection, workItemId, cancellationToken).ConfigureAwait(false);
-        if (result.WorkItem is not null)
-            cache[workItemId] = result.WorkItem;
+        if (result.Ticket is not null)
+            cache[workItemId] = result.Ticket;
 
         return result;
     }

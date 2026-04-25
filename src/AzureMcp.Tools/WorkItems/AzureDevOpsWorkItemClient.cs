@@ -94,8 +94,8 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
                 await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
                 using var document = await JsonDocument.ParseAsync(contentStream, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                var workItem = Parse(document.RootElement);
-                return new ReadWorkItemResult(workItem);
+                var ticket = Parse(document.RootElement);
+                return new ReadWorkItemResult(ticket);
             }
             catch (JsonException ex)
             {
@@ -129,7 +129,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         }
     }
 
-    internal static AzureDevOpsWorkItem Parse(JsonElement root)
+    internal static Ticket Parse(JsonElement root)
     {
         var fields = root.TryGetProperty("fields", out var fieldsElement) ? fieldsElement : default;
         var descriptionHtml = GetString(fields, "System.Description");
@@ -137,15 +137,15 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         var relations = root.TryGetProperty("relations", out var relationsElement) ? relationsElement : default;
         var parentId = TryGetLinkedWorkItemId(relations, "System.LinkTypes.Hierarchy-Reverse");
         var childIds = GetLinkedWorkItemIds(relations, "System.LinkTypes.Hierarchy-Forward");
-        return new AzureDevOpsWorkItem(
+        return new Ticket(
             Id: root.GetProperty("id").GetInt32(),
             Title: GetString(fields, "System.Title"),
             State: GetString(fields, "System.State"),
             WorkItemType: GetString(fields, "System.WorkItemType"),
             DescriptionText: ToPlainText(descriptionHtml),
             AssignedTo: ParseAssignedTo(fields),
-            ParentWorkItemId: parentId,
-            ChildWorkItemIds: childIds);
+            ParentTicketId: parentId,
+            ChildTicketIds: childIds);
     }
 
     private static int? TryGetLinkedWorkItemId(JsonElement relations, string relType)

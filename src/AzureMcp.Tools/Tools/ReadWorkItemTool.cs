@@ -27,6 +27,6 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDe
         if (result.Error is not null)
             return ReadWorkItemResponse.AsError(result.Error);
 
-        return new ReadWorkItemResponse(Ticket.FromWorkItem(result.WorkItem!));
+        return new ReadWorkItemResponse(result.Ticket!);
     }
 }

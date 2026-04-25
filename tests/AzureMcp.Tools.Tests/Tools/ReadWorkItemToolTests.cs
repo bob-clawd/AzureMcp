@@ -44,17 +44,17 @@ public sealed class ReadWorkItemToolTests
     {
         public Task<ReadWorkItemResult> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
         {
-            var workItem = new AzureDevOpsWorkItem(
+            var ticket = new Ticket(
                 Id: workItemId,
                 Title: "Investigate flaky deployment",
                 State: "New",
                 WorkItemType: "Bug",
                 DescriptionText: "Look at the failed release logs.",
                 AssignedTo: new AssignedTo("Grace Hopper", "grace@example.com"),
-                ParentWorkItemId: 1,
-                ChildWorkItemIds: new[] { 2, 3 });
+                ParentTicketId: 1,
+                ChildTicketIds: new[] { 2, 3 });
 
-            return Task.FromResult(new ReadWorkItemResult(workItem));
+            return Task.FromResult(new ReadWorkItemResult(ticket));
         }
     }
 

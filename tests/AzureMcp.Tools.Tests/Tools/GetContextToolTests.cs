@@ -52,7 +52,7 @@ public sealed class GetContextToolTests
 
     private sealed class FakeClient : IAzureDevOpsWorkItemClient
     {
-        private readonly IReadOnlyDictionary<int, AzureDevOpsWorkItem> _items = new Dictionary<int, AzureDevOpsWorkItem>
+        private readonly IReadOnlyDictionary<int, Ticket> _items = new Dictionary<int, Ticket>
         {
             [1] = new(
                 Id: 1,
@@ -61,8 +61,8 @@ public sealed class GetContextToolTests
                 WorkItemType: "Feature",
                 DescriptionText: "Root description",
                 AssignedTo: null,
-                ParentWorkItemId: null,
-                ChildWorkItemIds: [2, 4]),
+                ParentTicketId: null,
+                ChildTicketIds: [2, 4]),
             [2] = new(
                 Id: 2,
                 Title: "Child",
@@ -70,8 +70,8 @@ public sealed class GetContextToolTests
                 WorkItemType: "Bug",
                 DescriptionText: "Child description",
                 AssignedTo: null,
-                ParentWorkItemId: 1,
-                ChildWorkItemIds: [3]),
+                ParentTicketId: 1,
+                ChildTicketIds: [3]),
             [3] = new(
                 Id: 3,
                 Title: "Grandchild",
@@ -79,8 +79,8 @@ public sealed class GetContextToolTests
                 WorkItemType: "Task",
                 DescriptionText: "Grandchild description",
                 AssignedTo: null,
-                ParentWorkItemId: 2,
-                ChildWorkItemIds: []),
+                ParentTicketId: 2,
+                ChildTicketIds: []),
             [4] = new(
                 Id: 4,
                 Title: "Sibling",
@@ -88,8 +88,8 @@ public sealed class GetContextToolTests
                 WorkItemType: "Task",
                 DescriptionText: "Sibling description",
                 AssignedTo: null,
-                ParentWorkItemId: 1,
-                ChildWorkItemIds: [])
+                ParentTicketId: 1,
+                ChildTicketIds: [])
         };
 
         public Task<ReadWorkItemResult> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)

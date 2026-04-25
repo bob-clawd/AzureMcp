@@ -1,7 +1,7 @@
 namespace AzureMcp.Tools.WorkItems;
 
 public sealed record ReadWorkItemResult(
-    AzureDevOpsWorkItem? WorkItem,
+    Ticket? Ticket,
     ErrorInfo? Error = null)
 {
     public static ReadWorkItemResult AsError(string message, IReadOnlyDictionary<string, string>? details = null)
