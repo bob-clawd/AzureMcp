@@ -14,12 +14,12 @@ public sealed class ReadWorkItemToolTests
 
         var result = await tool.ExecuteAsync(42);
 
-        Assert.Equal(42, result.Id);
-        Assert.Equal("Investigate flaky deployment", result.Title);
-        Assert.Equal("New", result.State);
-        Assert.Equal("Bug", result.WorkItemType);
-        Assert.Equal("Grace Hopper", result.AssignedTo?.DisplayName);
-        Assert.Null(result.Error);
+        result.Id.Is(42);
+        result.Title.Is("Investigate flaky deployment");
+        result.State.Is("New");
+        result.WorkItemType.Is("Bug");
+        result.AssignedTo?.DisplayName.Is("Grace Hopper");
+        result.Error.IsNull();
     }
 
     [Fact]
@@ -30,12 +30,12 @@ public sealed class ReadWorkItemToolTests
 
         var result = await tool.ExecuteAsync(123);
 
-        Assert.NotNull(result.Error);
-        Assert.Contains("Missing:", result.Error!.Message);
-        Assert.Contains("organizationUrl", result.Error!.Message);
-        Assert.Contains("personalAccessToken", result.Error!.Message);
-        Assert.Contains("config file", result.Error!.Message);
-        Assert.Equal(0, client.Calls);
+        result.Error.IsNotNull();
+        result.Error!.Message.Contains("Missing:", StringComparison.Ordinal).IsTrue();
+        result.Error!.Message.Contains("organizationUrl", StringComparison.Ordinal).IsTrue();
+        result.Error!.Message.Contains("personalAccessToken", StringComparison.Ordinal).IsTrue();
+        result.Error!.Message.Contains("config file", StringComparison.Ordinal).IsTrue();
+        client.Calls.Is(0);
     }
 
     private sealed class FakeClient : IAzureDevOpsWorkItemClient

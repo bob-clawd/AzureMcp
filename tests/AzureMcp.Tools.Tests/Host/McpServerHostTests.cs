@@ -9,7 +9,7 @@ public sealed class McpServerHostTests
     {
         var options = McpServerHost.ParseOptions(["--config", "/tmp/azuremcp.json"]);
 
-        Assert.Equal("/tmp/azuremcp.json", options.ConfigPath);
+        options.ConfigPath.Is("/tmp/azuremcp.json");
     }
 
     [Fact]
@@ -17,6 +17,6 @@ public sealed class McpServerHostTests
     {
         var options = McpServerHost.ParseOptions(["--config", "./azuremcp.json"]);
 
-        Assert.Equal(Path.GetFullPath("./azuremcp.json"), options.ConfigPath);
+        options.ConfigPath.Is(Path.GetFullPath("./azuremcp.json"));
     }
 }

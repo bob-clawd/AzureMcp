@@ -55,19 +55,19 @@ public sealed class AzureDevOpsWorkItemClientTests
         var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
         var result = await client.ReadWorkItemAsync(connection, 12345);
 
-        Assert.Null(result.Error);
+        result.Error.IsNull();
         var workItem = result.WorkItem!;
 
-        Assert.Equal(12345, workItem.Id);
-        Assert.Equal("Improve deployment diagnostics", workItem.Title);
-        Assert.Equal("Active", workItem.State);
-        Assert.Equal("User Story", workItem.WorkItemType);
-        Assert.Equal("Ada Lovelace", workItem.AssignedTo?.DisplayName);
-        Assert.Equal("ada@example.com", workItem.AssignedTo?.UniqueName);
-        Assert.Equal("Investigate missing logs during deployment.\n\nCheck retention.", workItem.DescriptionText);
-        Assert.Equal(100, workItem.ParentWorkItemId);
-        Assert.Equal(new[] { 200, 201 }, workItem.ChildWorkItemIds);
-        Assert.Equal(new[] { 300 }, workItem.RelatedWorkItemIds);
+        workItem.Id.Is(12345);
+        workItem.Title.Is("Improve deployment diagnostics");
+        workItem.State.Is("Active");
+        workItem.WorkItemType.Is("User Story");
+        workItem.AssignedTo?.DisplayName.Is("Ada Lovelace");
+        workItem.AssignedTo?.UniqueName.Is("ada@example.com");
+        workItem.DescriptionText.Is("Investigate missing logs during deployment.\n\nCheck retention.");
+        workItem.ParentWorkItemId.Is(100);
+        workItem.ChildWorkItemIds.Is([200, 201]);
+        workItem.RelatedWorkItemIds.Is([300]);
     }
 
     [Fact]
@@ -79,8 +79,8 @@ public sealed class AzureDevOpsWorkItemClientTests
         var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
 
         var result = await client.ReadWorkItemAsync(connection, 404);
-        Assert.NotNull(result.Error);
-        Assert.Contains("not found", result.Error!.Message, StringComparison.OrdinalIgnoreCase);
+        result.Error.IsNotNull();
+        result.Error!.Message.Contains("not found", StringComparison.OrdinalIgnoreCase).IsTrue();
     }
 
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
