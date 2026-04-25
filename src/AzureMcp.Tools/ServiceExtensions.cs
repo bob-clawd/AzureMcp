@@ -9,14 +9,31 @@ namespace AzureMcp.Tools;
 
 public static class ServiceExtensions
 {
-    public static IServiceCollection WithAzureMcp(this IServiceCollection services, AzureMcpOptions options) => services
-        .AddSingleton(options)
-        .AddInfrastructure(options)
-        .AddImplementations<Tool>();
+    public static IServiceCollection WithAzureMcp(
+        this IServiceCollection services,
+        string organizationUrl,
+        string personalAccessToken,
+        string? project = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(organizationUrl);
+        ArgumentException.ThrowIfNullOrWhiteSpace(personalAccessToken);
+
+        var options = new AzureDevOpsConnectionOptions
+        {
+            OrganizationUrl = organizationUrl,
+            Project = project,
+            PersonalAccessToken = personalAccessToken
+        };
+
+        return services
+            .AddSingleton(options)
+            .AddInfrastructure(options)
+            .AddImplementations<Tool>();
+    }
 
     public static IEnumerable<Type> GetTools() => GetImplementations<Tool>();
 
-    private static IServiceCollection AddInfrastructure(this IServiceCollection services, AzureMcpOptions options)
+    private static IServiceCollection AddInfrastructure(this IServiceCollection services, AzureDevOpsConnectionOptions options)
     {
         services.AddHttpClient<IAzureDevOpsWorkItemClient, AzureDevOpsWorkItemClient>(client =>
         {

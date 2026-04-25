@@ -6,16 +6,16 @@ namespace AzureMcp.Tools.WorkItems;
 
 public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDevOpsWorkItemClient
 {
-    public async Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int workItemId, CancellationToken cancellationToken = default)
     {
-        if (id <= 0)
-            throw new ArgumentOutOfRangeException(nameof(id), id, "Work item id must be greater than zero.");
+        if (workItemId <= 0)
+            throw new ArgumentOutOfRangeException(nameof(workItemId), workItemId, "Work item id must be greater than zero.");
 
-        using var response = await httpClient.GetAsync($"_apis/wit/workitems/{id}?$expand=fields&api-version=7.1", cancellationToken)
+        using var response = await httpClient.GetAsync($"_apis/wit/workitems/{workItemId}?$expand=fields&api-version=7.1", cancellationToken)
             .ConfigureAwait(false);
 
         if (response.StatusCode == HttpStatusCode.NotFound)
-            throw new AzureDevOpsWorkItemNotFoundException(id);
+            throw new AzureDevOpsWorkItemNotFoundException(workItemId);
 
         response.EnsureSuccessStatusCode();
 

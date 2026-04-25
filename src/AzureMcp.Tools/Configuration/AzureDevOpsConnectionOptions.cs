@@ -1,6 +1,6 @@
 namespace AzureMcp.Tools.Configuration;
 
-public sealed class AzureMcpOptions
+internal sealed class AzureDevOpsConnectionOptions
 {
     public required string OrganizationUrl { get; init; }
 

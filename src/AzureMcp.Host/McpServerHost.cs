@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using AzureMcp.Tools.Configuration;
 
 namespace AzureMcp.Host;
 
@@ -17,7 +16,7 @@ public static class McpServerHost
         await host.RunAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public static AzureMcpOptions ParseOptions(string[] args, System.Collections.IDictionary environmentVariables)
+    internal static AzureMcpOptions ParseOptions(string[] args, System.Collections.IDictionary environmentVariables)
     {
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(environmentVariables);

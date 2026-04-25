@@ -21,15 +21,15 @@ public sealed class ReadWorkItemToolTests
 
     private sealed class FakeClient : IAzureDevOpsWorkItemClient
     {
-        public Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int id, CancellationToken cancellationToken = default)
+        public Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int workItemId, CancellationToken cancellationToken = default)
             => Task.FromResult(new AzureDevOpsWorkItem(
-                Id: id,
+                Id: workItemId,
                 Title: "Investigate flaky deployment",
                 State: "New",
                 WorkItemType: "Bug",
                 DescriptionText: "Look at the failed release logs.",
                 DescriptionHtml: "<div>Look at the failed release logs.</div>",
                 AssignedTo: new AzureDevOpsAssignedTo("Grace Hopper", "grace@example.com"),
-                Url: $"https://dev.azure.com/test-org/_apis/wit/workItems/{id}"));
+                Url: $"https://dev.azure.com/test-org/_apis/wit/workItems/{workItemId}"));
     }
 }

@@ -70,7 +70,7 @@ Input:
 
 ```json
 {
-  "id": 12345
+  "workItemId": 12345
 }
 ```
 

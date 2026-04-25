@@ -19,10 +19,10 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client) : Tool
     [McpServerTool(Name = "read_work_item", Title = "Read Work Item", ReadOnly = true, Idempotent = true)]
     [Description("Load a single Azure DevOps work item by id and return a structured view with the key fields needed for everyday work.")]
     public async Task<ReadWorkItemResponse> ExecuteAsync(
-        [Description("Azure DevOps work item id.")] int id,
+        [Description("Azure DevOps work item id.")] int workItemId,
         CancellationToken cancellationToken = default)
     {
-        var workItem = await client.ReadWorkItemAsync(id, cancellationToken).ConfigureAwait(false);
+        var workItem = await client.ReadWorkItemAsync(workItemId, cancellationToken).ConfigureAwait(false);
 
         return new ReadWorkItemResponse(
             Id: workItem.Id,

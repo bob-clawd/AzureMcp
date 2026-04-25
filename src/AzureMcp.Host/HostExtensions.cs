@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using AzureMcp.Tools.Configuration;
 using AzureMcp.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -16,8 +15,8 @@ public static class HostExtensions
         ?? typeof(HostExtensions).Assembly.GetName().Version?.ToString()
         ?? "0.0.0";
 
-    public static IServiceCollection Compose(this IServiceCollection services, AzureMcpOptions options) => services
-        .WithAzureMcp(options)
+    internal static IServiceCollection Compose(this IServiceCollection services, AzureMcpOptions options) => services
+        .WithAzureMcp(options.OrganizationUrl, options.PersonalAccessToken, options.Project)
         .AddMcpRuntime();
 
     private static IServiceCollection AddMcpRuntime(this IServiceCollection services)
