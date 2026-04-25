@@ -16,9 +16,8 @@ public sealed class GetContextToolTests
 
         result.Error.IsNull();
         result.RootWorkItemId.Is(1);
-        result.Items.Select(item => item.Id).Is(1, 2, 3, 4);
-        result.Items.Select(item => item.Level).Is(0, 1, 2, 1);
-        result.Items.Select(item => item.DescriptionText).Is(
+        result.Tickets.Select(item => item.Id).Is(1, 2, 3, 4);
+        result.Tickets.Select(item => item.DescriptionText).Is(
             "Root description",
             "Child description",
             "Grandchild description",
@@ -36,8 +35,8 @@ public sealed class GetContextToolTests
         rootResult.Error.IsNull();
         childResult.Error.IsNull();
         rootResult.RootWorkItemId.Is(childResult.RootWorkItemId);
-        rootResult.Items.Select(item => item.Id).Is(childResult.Items.Select(item => item.Id).ToArray());
-        rootResult.Items.Select(item => item.DescriptionText).Is(childResult.Items.Select(item => item.DescriptionText).ToArray());
+        rootResult.Tickets.Select(item => item.Id).Is(childResult.Tickets.Select(item => item.Id).ToArray());
+        rootResult.Tickets.Select(item => item.DescriptionText).Is(childResult.Tickets.Select(item => item.DescriptionText).ToArray());
     }
 
     [Fact]

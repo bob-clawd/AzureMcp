@@ -14,12 +14,13 @@ public sealed class ReadWorkItemToolTests
 
         var result = await tool.ExecuteAsync(42);
 
-        result.Id.Is(42);
-        result.Title.Is("Investigate flaky deployment");
-        result.State.Is("New");
-        result.WorkItemType.Is("Bug");
-        result.AssignedTo?.DisplayName.Is("Grace Hopper");
         result.Error.IsNull();
+        result.Ticket.IsNotNull();
+        result.Ticket!.Id.Is(42);
+        result.Ticket.Title.Is("Investigate flaky deployment");
+        result.Ticket.State.Is("New");
+        result.Ticket.WorkItemType.Is("Bug");
+        result.Ticket.AssignedTo?.DisplayName.Is("Grace Hopper");
     }
 
     [Fact]
@@ -31,6 +32,7 @@ public sealed class ReadWorkItemToolTests
         var result = await tool.ExecuteAsync(123);
 
         result.Error.IsNotNull();
+        result.Ticket.IsNull();
         result.Error!.Message.IsContaining("Missing:");
         result.Error!.Message.IsContaining("organizationUrl");
         result.Error!.Message.IsContaining("personalAccessToken");

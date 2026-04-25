@@ -7,7 +7,7 @@ namespace AzureMcp.Tools.Tools;
 
 public sealed record GetContextResponse(
     int RootWorkItemId,
-    IReadOnlyList<Ticket> Items,
+    IReadOnlyList<Ticket> Tickets,
     ErrorInfo? Error = null)
 {
     public static GetContextResponse AsError(ErrorInfo error)
@@ -30,22 +30,21 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         if (rootResult.Error is not null)
             return GetContextResponse.AsError(rootResult.Error);
 
-        var entries = new List<Ticket>();
+        var tickets = new List<Ticket>();
         var visited = new HashSet<int>();
 
         var traversalResult = await TraverseAsync(
             connection,
             rootResult.Root!.Id,
-            level: 0,
             cache,
             visited,
-            entries,
+            tickets,
             cancellationToken).ConfigureAwait(false);
 
         if (traversalResult is not null)
             return GetContextResponse.AsError(traversalResult);
 
-        return new GetContextResponse(rootResult.Root.Id, entries);
+        return new GetContextResponse(rootResult.Root.Id, tickets);
     }
 
     private async Task<(AzureDevOpsWorkItem? Root, ErrorInfo? Error)> FindRootAsync(
@@ -81,10 +80,9 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
     private async Task<ErrorInfo?> TraverseAsync(
         AzureDevOpsConnectionInfo connection,
         int workItemId,
-        int level,
         IDictionary<int, AzureDevOpsWorkItem> cache,
         ISet<int> visited,
-        ICollection<Ticket> entries,
+        ICollection<Ticket> tickets,
         CancellationToken cancellationToken)
     {
         if (!visited.Add(workItemId))
@@ -95,11 +93,11 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
             return result.Error;
 
         var workItem = result.WorkItem!;
-        entries.Add(Ticket.FromWorkItem(workItem, level));
+        tickets.Add(Ticket.FromWorkItem(workItem));
 
         foreach (var childId in workItem.ChildWorkItemIds)
         {
-            var error = await TraverseAsync(connection, childId, level + 1, cache, visited, entries, cancellationToken).ConfigureAwait(false);
+            var error = await TraverseAsync(connection, childId, cache, visited, tickets, cancellationToken).ConfigureAwait(false);
             if (error is not null)
                 return error;
         }

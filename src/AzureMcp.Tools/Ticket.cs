@@ -13,27 +13,9 @@ public sealed record Ticket(
     int? ParentWorkItemId,
     IReadOnlyList<int> ChildWorkItemIds,
     IReadOnlyList<int> RelatedWorkItemIds,
-    string? Url,
-    int? Level = null,
-    ErrorInfo? Error = null)
+    string? Url)
 {
-    public static Ticket AsError(int workItemId, ErrorInfo error)
-        => new(
-            Id: workItemId,
-            Title: null,
-            State: null,
-            WorkItemType: null,
-            DescriptionText: null,
-            DescriptionHtml: null,
-            AssignedTo: null,
-            ParentWorkItemId: null,
-            ChildWorkItemIds: Array.Empty<int>(),
-            RelatedWorkItemIds: Array.Empty<int>(),
-            Url: null,
-            Level: null,
-            Error: error);
-
-    public static Ticket FromWorkItem(AzureDevOpsWorkItem workItem, int? level = null)
+    public static Ticket FromWorkItem(AzureDevOpsWorkItem workItem)
         => new(
             Id: workItem.Id,
             Title: workItem.Title,
@@ -45,7 +27,5 @@ public sealed record Ticket(
             ParentWorkItemId: workItem.ParentWorkItemId,
             ChildWorkItemIds: workItem.ChildWorkItemIds,
             RelatedWorkItemIds: workItem.RelatedWorkItemIds,
-            Url: workItem.Url,
-            Level: level,
-            Error: null);
+            Url: workItem.Url);
 }

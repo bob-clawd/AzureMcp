@@ -86,17 +86,15 @@ Example response shape:
 ```json
 {
   "rootWorkItemId": 100,
-  "items": [
+  "tickets": [
     {
       "id": 100,
-      "level": 0,
       "title": "Parent feature",
       "workItemType": "Feature",
       "descriptionText": "High-level context"
     },
     {
       "id": 12345,
-      "level": 1,
       "title": "Bug in child item",
       "workItemType": "Bug",
       "descriptionText": "Concrete problem"
@@ -109,20 +107,23 @@ Example response shape:
 
 ```json
 {
-  "id": 12345,
-  "title": "Improve deployment diagnostics",
-  "state": "Active",
-  "workItemType": "User Story",
-  "descriptionText": "Investigate missing logs during deployment.",
-  "descriptionHtml": "<div>Investigate missing logs during deployment.</div>",
-  "assignedTo": {
-    "displayName": "Ada Lovelace",
-    "uniqueName": "ada@example.com"
+  "ticket": {
+    "id": 12345,
+    "title": "Improve deployment diagnostics",
+    "state": "Active",
+    "workItemType": "User Story",
+    "descriptionText": "Investigate missing logs during deployment.",
+    "descriptionHtml": "<div>Investigate missing logs during deployment.</div>",
+    "assignedTo": {
+      "displayName": "Ada Lovelace",
+      "uniqueName": "ada@example.com"
+    },
+    "parentWorkItemId": 100,
+    "childWorkItemIds": [200, 201],
+    "relatedWorkItemIds": [300],
+    "url": "https://dev.azure.com/your-org/_apis/wit/workItems/12345"
   },
-  "parentWorkItemId": 100,
-  "childWorkItemIds": [200, 201],
-  "relatedWorkItemIds": [300],
-  "url": "https://dev.azure.com/your-org/_apis/wit/workItems/12345"
+  "error": null
 }
 ```
 
