@@ -198,7 +198,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         return int.TryParse(tail, out var id) ? id : null;
     }
 
-    private static AssignedTo? ParseAssignedTo(JsonElement fields)
+    private static string? ParseAssignedTo(JsonElement fields)
     {
         if (!fields.TryGetProperty("System.AssignedTo", out var assignedToElement)
             || assignedToElement.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
@@ -207,11 +207,20 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         }
 
         if (assignedToElement.ValueKind == JsonValueKind.String)
-            return new AssignedTo(assignedToElement.GetString(), null);
+            return assignedToElement.GetString();
 
-        return new AssignedTo(
-            DisplayName: assignedToElement.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
-            UniqueName: assignedToElement.TryGetProperty("uniqueName", out var uniqueName) ? uniqueName.GetString() : null);
+        var displayName = assignedToElement.TryGetProperty("displayName", out var displayNameElement)
+            ? displayNameElement.GetString()
+            : null;
+
+        if (!string.IsNullOrWhiteSpace(displayName))
+            return displayName;
+
+        var uniqueName = assignedToElement.TryGetProperty("uniqueName", out var uniqueNameElement)
+            ? uniqueNameElement.GetString()
+            : null;
+
+        return uniqueName;
     }
 
     private static string? GetString(JsonElement element, string propertyName) =>

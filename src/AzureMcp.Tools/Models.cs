@@ -12,6 +12,6 @@ public sealed record Ticket(
     string? State,
     string? WorkItemType,
     string? DescriptionText,
-    AssignedTo? AssignedTo,
+    string? AssignedTo,
     int? ParentTicketId,
     IReadOnlyList<int> ChildTicketIds);

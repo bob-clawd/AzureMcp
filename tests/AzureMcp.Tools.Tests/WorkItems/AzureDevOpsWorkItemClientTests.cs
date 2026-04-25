@@ -61,8 +61,7 @@ public sealed class AzureDevOpsWorkItemClientTests
         ticket.Title.Is("Improve deployment diagnostics");
         ticket.State.Is("Active");
         ticket.WorkItemType.Is("User Story");
-        ticket.AssignedTo?.DisplayName.Is("Ada Lovelace");
-        ticket.AssignedTo?.UniqueName.Is("ada@example.com");
+        ticket.AssignedTo.Is("Ada Lovelace");
         ticket.DescriptionText.Is("Investigate missing logs during deployment.\n\nCheck retention.");
         ticket.ParentTicketId.Is(100);
         ticket.ChildTicketIds.Is([200, 201]);

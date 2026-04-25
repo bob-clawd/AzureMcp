@@ -20,7 +20,7 @@ public sealed class ReadWorkItemToolTests
         result.Ticket.Title.Is("Investigate flaky deployment");
         result.Ticket.State.Is("New");
         result.Ticket.WorkItemType.Is("Bug");
-        result.Ticket.AssignedTo?.DisplayName.Is("Grace Hopper");
+        result.Ticket.AssignedTo.Is("Grace Hopper");
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public sealed class ReadWorkItemToolTests
                 State: "New",
                 WorkItemType: "Bug",
                 DescriptionText: "Look at the failed release logs.",
-                AssignedTo: new AssignedTo("Grace Hopper", "grace@example.com"),
+                AssignedTo: "Grace Hopper",
                 ParentTicketId: 1,
                 ChildTicketIds: new[] { 2, 3 });
 
