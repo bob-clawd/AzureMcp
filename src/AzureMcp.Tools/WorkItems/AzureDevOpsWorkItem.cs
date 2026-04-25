@@ -1,6 +1,6 @@
 namespace AzureMcp.Tools.WorkItems;
 
-public sealed record AzureDevOpsAssignedTo(
+public sealed record AssignedTo(
     string? DisplayName,
     string? UniqueName);
 
@@ -10,7 +10,6 @@ public sealed record AzureDevOpsWorkItem(
     string? State,
     string? WorkItemType,
     string? DescriptionText,
-    AzureDevOpsAssignedTo? AssignedTo,
+    AssignedTo? AssignedTo,
     int? ParentWorkItemId,
-    IReadOnlyList<int> ChildWorkItemIds,
-    string? Url);
+    IReadOnlyList<int> ChildWorkItemIds);

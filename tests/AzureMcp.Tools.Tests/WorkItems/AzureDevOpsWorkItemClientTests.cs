@@ -13,7 +13,6 @@ public sealed class AzureDevOpsWorkItemClientTests
         const string payload = """
         {
           "id": 12345,
-          "url": "https://dev.azure.com/test-org/_apis/wit/workItems/12345",
           "relations": [
             {
               "rel": "System.LinkTypes.Hierarchy-Reverse",

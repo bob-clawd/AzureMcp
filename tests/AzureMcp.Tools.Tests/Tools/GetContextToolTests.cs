@@ -62,8 +62,7 @@ public sealed class GetContextToolTests
                 DescriptionText: "Root description",
                 AssignedTo: null,
                 ParentWorkItemId: null,
-                ChildWorkItemIds: [2, 4],
-                Url: "https://dev.azure.com/test-org/_apis/wit/workItems/1"),
+                ChildWorkItemIds: [2, 4]),
             [2] = new(
                 Id: 2,
                 Title: "Child",
@@ -72,8 +71,7 @@ public sealed class GetContextToolTests
                 DescriptionText: "Child description",
                 AssignedTo: null,
                 ParentWorkItemId: 1,
-                ChildWorkItemIds: [3],
-                Url: "https://dev.azure.com/test-org/_apis/wit/workItems/2"),
+                ChildWorkItemIds: [3]),
             [3] = new(
                 Id: 3,
                 Title: "Grandchild",
@@ -82,8 +80,7 @@ public sealed class GetContextToolTests
                 DescriptionText: "Grandchild description",
                 AssignedTo: null,
                 ParentWorkItemId: 2,
-                ChildWorkItemIds: [],
-                Url: "https://dev.azure.com/test-org/_apis/wit/workItems/3"),
+                ChildWorkItemIds: []),
             [4] = new(
                 Id: 4,
                 Title: "Sibling",
@@ -92,8 +89,7 @@ public sealed class GetContextToolTests
                 DescriptionText: "Sibling description",
                 AssignedTo: null,
                 ParentWorkItemId: 1,
-                ChildWorkItemIds: [],
-                Url: "https://dev.azure.com/test-org/_apis/wit/workItems/4")
+                ChildWorkItemIds: [])
         };
 
         public Task<ReadWorkItemResult> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)

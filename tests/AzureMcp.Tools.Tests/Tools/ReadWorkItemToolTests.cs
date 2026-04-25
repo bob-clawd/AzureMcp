@@ -50,10 +50,9 @@ public sealed class ReadWorkItemToolTests
                 State: "New",
                 WorkItemType: "Bug",
                 DescriptionText: "Look at the failed release logs.",
-                AssignedTo: new AzureDevOpsAssignedTo("Grace Hopper", "grace@example.com"),
+                AssignedTo: new AssignedTo("Grace Hopper", "grace@example.com"),
                 ParentWorkItemId: 1,
-                ChildWorkItemIds: new[] { 2, 3 },
-                Url: $"https://dev.azure.com/test-org/_apis/wit/workItems/{workItemId}");
+                ChildWorkItemIds: new[] { 2, 3 });
 
             return Task.FromResult(new ReadWorkItemResult(workItem));
         }

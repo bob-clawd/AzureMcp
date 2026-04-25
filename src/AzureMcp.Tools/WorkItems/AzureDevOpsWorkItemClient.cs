@@ -137,8 +137,6 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         var relations = root.TryGetProperty("relations", out var relationsElement) ? relationsElement : default;
         var parentId = TryGetLinkedWorkItemId(relations, "System.LinkTypes.Hierarchy-Reverse");
         var childIds = GetLinkedWorkItemIds(relations, "System.LinkTypes.Hierarchy-Forward");
-        var relatedIds = GetLinkedWorkItemIds(relations, "System.LinkTypes.Related");
-
         return new AzureDevOpsWorkItem(
             Id: root.GetProperty("id").GetInt32(),
             Title: GetString(fields, "System.Title"),
@@ -147,8 +145,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             DescriptionText: ToPlainText(descriptionHtml),
             AssignedTo: ParseAssignedTo(fields),
             ParentWorkItemId: parentId,
-            ChildWorkItemIds: childIds,
-            Url: root.TryGetProperty("url", out var urlElement) ? urlElement.GetString() : null);
+            ChildWorkItemIds: childIds);
     }
 
     private static int? TryGetLinkedWorkItemId(JsonElement relations, string relType)
@@ -201,7 +198,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         return int.TryParse(tail, out var id) ? id : null;
     }
 
-    private static AzureDevOpsAssignedTo? ParseAssignedTo(JsonElement fields)
+    private static AssignedTo? ParseAssignedTo(JsonElement fields)
     {
         if (!fields.TryGetProperty("System.AssignedTo", out var assignedToElement)
             || assignedToElement.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
@@ -210,9 +207,9 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         }
 
         if (assignedToElement.ValueKind == JsonValueKind.String)
-            return new AzureDevOpsAssignedTo(assignedToElement.GetString(), null);
+            return new AssignedTo(assignedToElement.GetString(), null);
 
-        return new AzureDevOpsAssignedTo(
+        return new AssignedTo(
             DisplayName: assignedToElement.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
             UniqueName: assignedToElement.TryGetProperty("uniqueName", out var uniqueName) ? uniqueName.GetString() : null);
     }

@@ -116,8 +116,7 @@ Example response shape:
       "displayName": "Ada Lovelace",
       "uniqueName": "ada@example.com"
     },
-    "parentWorkItemId": 100,
-    "url": "https://dev.azure.com/your-org/_apis/wit/workItems/12345"
+    "parentWorkItemId": 100
   },
   "error": null
 }

@@ -12,9 +12,8 @@ public sealed record Ticket(
     string? State,
     string? WorkItemType,
     string? DescriptionText,
-    AzureDevOpsAssignedTo? AssignedTo,
-    int? ParentWorkItemId,
-    string? Url)
+    AssignedTo? AssignedTo,
+    int? ParentWorkItemId)
 {
     public static Ticket FromWorkItem(AzureDevOpsWorkItem workItem)
         => new(
@@ -24,6 +23,5 @@ public sealed record Ticket(
             WorkItemType: workItem.WorkItemType,
             DescriptionText: workItem.DescriptionText,
             AssignedTo: workItem.AssignedTo,
-            ParentWorkItemId: workItem.ParentWorkItemId,
-            Url: workItem.Url);
+            ParentWorkItemId: workItem.ParentWorkItemId);
 }
