@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using AzureMcp.Tools.WorkItems;
+using AzureMcp.Tools.Configuration;
 
 namespace AzureMcp.Tools.Tests.WorkItems;
 
@@ -48,11 +49,10 @@ public sealed class AzureDevOpsWorkItemClientTests
         {
             Content = new StringContent(payload, Encoding.UTF8, "application/json")
         }))
-        {
-            BaseAddress = new Uri("https://dev.azure.com/test-org/")
-        };
+        ;
 
-        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var state = new AzureDevOpsConnectionState("https://dev.azure.com/test-org", "secret-pat", null);
+        var client = new AzureDevOpsWorkItemClient(httpClient, state);
         var workItem = await client.ReadWorkItemAsync(12345);
 
         Assert.Equal(12345, workItem.Id);
@@ -70,12 +70,10 @@ public sealed class AzureDevOpsWorkItemClientTests
     [Fact]
     public async Task ReadWorkItemAsync_ThrowsSpecificException_WhenNotFound()
     {
-        using var httpClient = new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)))
-        {
-            BaseAddress = new Uri("https://dev.azure.com/test-org/")
-        };
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)));
 
-        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var state = new AzureDevOpsConnectionState("https://dev.azure.com/test-org", "secret-pat", null);
+        var client = new AzureDevOpsWorkItemClient(httpClient, state);
 
         await Assert.ThrowsAsync<AzureDevOpsWorkItemNotFoundException>(() => client.ReadWorkItemAsync(404));
     }

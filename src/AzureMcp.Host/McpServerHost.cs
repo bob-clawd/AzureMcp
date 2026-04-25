@@ -48,23 +48,23 @@ public static class McpServerHost
         project ??= environmentVariables["AZURE_MCP_PROJECT"] as string;
         personalAccessToken ??= environmentVariables["AZURE_MCP_PAT"] as string;
 
-        if (string.IsNullOrWhiteSpace(organizationUrl))
-            throw new ArgumentException("Missing Azure DevOps organization URL. Use '--organization-url <url>' or set 'AZURE_MCP_ORGANIZATION_URL'.", nameof(args));
-
-        if (!Uri.TryCreate(organizationUrl, UriKind.Absolute, out var parsedOrganizationUrl)
-            || (parsedOrganizationUrl.Scheme != Uri.UriSchemeHttps && parsedOrganizationUrl.Scheme != Uri.UriSchemeHttp))
+        string? normalizedOrganizationUrl = null;
+        if (!string.IsNullOrWhiteSpace(organizationUrl))
         {
-            throw new ArgumentException($"Invalid organization URL '{organizationUrl}'.", nameof(args));
-        }
+            if (!Uri.TryCreate(organizationUrl, UriKind.Absolute, out var parsedOrganizationUrl)
+                || (parsedOrganizationUrl.Scheme != Uri.UriSchemeHttps && parsedOrganizationUrl.Scheme != Uri.UriSchemeHttp))
+            {
+                throw new ArgumentException($"Invalid organization URL '{organizationUrl}'.", nameof(args));
+            }
 
-        if (string.IsNullOrWhiteSpace(personalAccessToken))
-            throw new ArgumentException("Missing Azure DevOps PAT. Use '--pat <token>' or set 'AZURE_MCP_PAT'.", nameof(args));
+            normalizedOrganizationUrl = parsedOrganizationUrl.ToString().TrimEnd('/');
+        }
 
         return new AzureMcpOptions
         {
-            OrganizationUrl = parsedOrganizationUrl.ToString().TrimEnd('/'),
+            OrganizationUrl = normalizedOrganizationUrl,
             Project = string.IsNullOrWhiteSpace(project) ? null : project.Trim(),
-            PersonalAccessToken = personalAccessToken.Trim()
+            PersonalAccessToken = string.IsNullOrWhiteSpace(personalAccessToken) ? null : personalAccessToken.Trim()
         };
     }
 

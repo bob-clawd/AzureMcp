@@ -1,17 +1,28 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Text;
+using AzureMcp.Tools.Configuration;
 
 namespace AzureMcp.Tools.WorkItems;
 
-public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDevOpsWorkItemClient
+public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient, IAzureDevOpsConnectionState connectionState) : IAzureDevOpsWorkItemClient
 {
     public async Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int workItemId, CancellationToken cancellationToken = default)
     {
         if (workItemId <= 0)
             throw new ArgumentOutOfRangeException(nameof(workItemId), workItemId, "Work item id must be greater than zero.");
 
-        using var response = await httpClient.GetAsync($"_apis/wit/workitems/{workItemId}?$expand=all&api-version=7.1", cancellationToken)
+        var connection = connectionState.GetRequired();
+        var requestUrl = $"{connection.OrganizationUrl}/_apis/wit/workitems/{workItemId}?$expand=all&api-version=7.1";
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        var token = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{connection.PersonalAccessToken}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+
+        using var response = await httpClient.SendAsync(request, cancellationToken)
             .ConfigureAwait(false);
 
         if (response.StatusCode == HttpStatusCode.NotFound)

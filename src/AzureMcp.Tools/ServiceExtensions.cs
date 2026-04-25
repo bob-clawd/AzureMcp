@@ -1,6 +1,4 @@
-using System.Net.Http.Headers;
 using System.Reflection;
-using System.Text;
 using AzureMcp.Tools.Configuration;
 using AzureMcp.Tools.WorkItems;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,37 +9,21 @@ public static class ServiceExtensions
 {
     public static IServiceCollection WithAzureMcp(
         this IServiceCollection services,
-        string organizationUrl,
-        string personalAccessToken,
+        string? organizationUrl,
+        string? personalAccessToken,
         string? project = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(organizationUrl);
-        ArgumentException.ThrowIfNullOrWhiteSpace(personalAccessToken);
-
-        var options = new AzureDevOpsConnectionOptions
-        {
-            OrganizationUrl = organizationUrl,
-            Project = project,
-            PersonalAccessToken = personalAccessToken
-        };
-
         return services
-            .AddSingleton(options)
-            .AddInfrastructure(options)
+            .AddSingleton<IAzureDevOpsConnectionState>(new AzureDevOpsConnectionState(organizationUrl, personalAccessToken, project))
+            .AddInfrastructure()
             .AddImplementations<Tool>();
     }
 
     public static IEnumerable<Type> GetTools() => GetImplementations<Tool>();
 
-    private static IServiceCollection AddInfrastructure(this IServiceCollection services, AzureDevOpsConnectionOptions options)
+    private static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        services.AddHttpClient<IAzureDevOpsWorkItemClient, AzureDevOpsWorkItemClient>(client =>
-        {
-            client.BaseAddress = new Uri(options.OrganizationUrl + "/");
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            var token = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{options.PersonalAccessToken}"));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", token);
-        });
+        services.AddHttpClient<IAzureDevOpsWorkItemClient, AzureDevOpsWorkItemClient>();
 
         return services;
     }

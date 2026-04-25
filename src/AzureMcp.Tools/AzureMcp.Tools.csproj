@@ -9,4 +9,10 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
     <PackageReference Include="ModelContextProtocol" Version="1.1.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>AzureMcp.Tools.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>

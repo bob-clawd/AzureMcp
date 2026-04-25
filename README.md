@@ -35,6 +35,9 @@ That gives us a real end-to-end slice to shape the architecture before adding mo
 AzureMcp reads its Azure DevOps connection settings from command-line arguments or environment variables.
 Command-line arguments win.
 
+If required values are missing when you call a tool, the server will fail the call with a message that is meant to be actionable for an agent:
+ask the user for the missing value(s), then call `configure_connection`.
+
 ### Required
 
 - `--organization-url` or `AZURE_MCP_ORGANIZATION_URL`
@@ -45,6 +48,12 @@ Command-line arguments win.
 - `--project` or `AZURE_MCP_PROJECT`
 
 `project` is already part of the server configuration because it will likely matter for later tools, even though `read_work_item` itself only needs the organization and PAT.
+
+### Tool: `configure_connection`
+
+You can also set/update the connection values at runtime (for the current MCP server process) via:
+
+- `configure_connection(organizationUrl?, personalAccessToken?, project?)`
 
 ## Run locally
 
