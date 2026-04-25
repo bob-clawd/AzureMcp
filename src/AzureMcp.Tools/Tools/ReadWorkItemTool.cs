@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using AzureMcp.Tools.WorkItems;
 using ModelContextProtocol.Server;
+using AzureMcp.Tools.Configuration;
 
 namespace AzureMcp.Tools.Tools;
 
@@ -15,7 +16,9 @@ public sealed record ReadWorkItemResponse(
     int? ParentWorkItemId,
     IReadOnlyList<int> ChildWorkItemIds,
     IReadOnlyList<int> RelatedWorkItemIds,
-    string? Url);
+    string? Url,
+    string? Error,
+    IReadOnlyList<string>? MissingEnvironmentVariables);
 
 public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client) : Tool
 {
@@ -25,19 +28,41 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client) : Tool
         [Description("Azure DevOps work item id.")] int workItemId,
         CancellationToken cancellationToken = default)
     {
-        var workItem = await client.ReadWorkItemAsync(workItemId, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var workItem = await client.ReadWorkItemAsync(workItemId, cancellationToken).ConfigureAwait(false);
 
-        return new ReadWorkItemResponse(
-            Id: workItem.Id,
-            Title: workItem.Title,
-            State: workItem.State,
-            WorkItemType: workItem.WorkItemType,
-            DescriptionText: workItem.DescriptionText,
-            DescriptionHtml: workItem.DescriptionHtml,
-            AssignedTo: workItem.AssignedTo,
-            ParentWorkItemId: workItem.ParentWorkItemId,
-            ChildWorkItemIds: workItem.ChildWorkItemIds,
-            RelatedWorkItemIds: workItem.RelatedWorkItemIds,
-            Url: workItem.Url);
+            return new ReadWorkItemResponse(
+                Id: workItem.Id,
+                Title: workItem.Title,
+                State: workItem.State,
+                WorkItemType: workItem.WorkItemType,
+                DescriptionText: workItem.DescriptionText,
+                DescriptionHtml: workItem.DescriptionHtml,
+                AssignedTo: workItem.AssignedTo,
+                ParentWorkItemId: workItem.ParentWorkItemId,
+                ChildWorkItemIds: workItem.ChildWorkItemIds,
+                RelatedWorkItemIds: workItem.RelatedWorkItemIds,
+                Url: workItem.Url,
+                Error: null,
+                MissingEnvironmentVariables: null);
+        }
+        catch (AzureMcpConfigurationException ex)
+        {
+            return new ReadWorkItemResponse(
+                Id: workItemId,
+                Title: null,
+                State: null,
+                WorkItemType: null,
+                DescriptionText: null,
+                DescriptionHtml: null,
+                AssignedTo: null,
+                ParentWorkItemId: null,
+                ChildWorkItemIds: Array.Empty<int>(),
+                RelatedWorkItemIds: Array.Empty<int>(),
+                Url: null,
+                Error: ex.Message,
+                MissingEnvironmentVariables: ex.MissingKeys);
+        }
     }
 }

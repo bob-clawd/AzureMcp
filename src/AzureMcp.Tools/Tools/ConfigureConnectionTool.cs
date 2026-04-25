@@ -7,7 +7,8 @@ namespace AzureMcp.Tools.Tools;
 public sealed record ConfigureConnectionResponse(
     bool OrganizationUrlSet,
     bool PersonalAccessTokenSet,
-    bool ProjectSet);
+    bool ProjectSet,
+    string? Error);
 
 public sealed class ConfigureConnectionTool(IAzureDevOpsConnectionState state) : Tool
 {
@@ -25,6 +26,17 @@ public sealed class ConfigureConnectionTool(IAzureDevOpsConnectionState state) :
         var pat = string.IsNullOrWhiteSpace(personalAccessToken) ? null : personalAccessToken.Trim();
         var proj = string.IsNullOrWhiteSpace(project) ? null : project.Trim();
 
+        if (org is not null && (!Uri.TryCreate(org, UriKind.Absolute, out var parsed) || (parsed.Scheme != Uri.UriSchemeHttps && parsed.Scheme != Uri.UriSchemeHttp)))
+        {
+            return Task.FromResult(new ConfigureConnectionResponse(
+                OrganizationUrlSet: false,
+                PersonalAccessTokenSet: false,
+                ProjectSet: false,
+                Error: $"Invalid organizationUrl '{org}'. Expected an absolute http/https URL."));
+        }
+
+        org = org?.TrimEnd('/');
+
         state.Set(org, pat, proj);
 
         var orgSet = org is not null;
@@ -38,6 +50,7 @@ public sealed class ConfigureConnectionTool(IAzureDevOpsConnectionState state) :
         return Task.FromResult(new ConfigureConnectionResponse(
             OrganizationUrlSet: orgSet,
             PersonalAccessTokenSet: patSet,
-            ProjectSet: projSet));
+            ProjectSet: projSet,
+            Error: null));
     }
 }

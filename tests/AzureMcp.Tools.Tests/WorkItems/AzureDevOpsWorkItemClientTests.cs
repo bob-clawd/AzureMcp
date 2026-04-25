@@ -51,7 +51,7 @@ public sealed class AzureDevOpsWorkItemClientTests
         }))
         ;
 
-        var state = new AzureDevOpsConnectionState("https://dev.azure.com/test-org", "secret-pat", null);
+        IAzureDevOpsConnectionState state = new AzureDevOpsConnectionState("https://dev.azure.com/test-org", "secret-pat", null);
         var client = new AzureDevOpsWorkItemClient(httpClient, state);
         var workItem = await client.ReadWorkItemAsync(12345);
 
@@ -72,7 +72,7 @@ public sealed class AzureDevOpsWorkItemClientTests
     {
         using var httpClient = new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)));
 
-        var state = new AzureDevOpsConnectionState("https://dev.azure.com/test-org", "secret-pat", null);
+        IAzureDevOpsConnectionState state = new AzureDevOpsConnectionState("https://dev.azure.com/test-org", "secret-pat", null);
         var client = new AzureDevOpsWorkItemClient(httpClient, state);
 
         await Assert.ThrowsAsync<AzureDevOpsWorkItemNotFoundException>(() => client.ReadWorkItemAsync(404));

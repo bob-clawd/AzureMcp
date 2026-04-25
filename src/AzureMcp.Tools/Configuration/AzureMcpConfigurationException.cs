@@ -15,6 +15,6 @@ public sealed class AzureMcpConfigurationException : InvalidOperationException
         var keys = string.Join(", ", missingKeys);
 
         return $"AzureMcp is not configured. Missing: {keys}. " +
-               $"Ask the user for the missing value(s), then call the tool 'configure_connection' to set them for this MCP server process.";
+               "Ask the user for the missing value(s), then call `configure_connection` with the provided values (this sets them for the current MCP server process).";
     }
 }
