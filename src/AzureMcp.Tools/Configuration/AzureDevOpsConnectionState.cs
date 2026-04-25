@@ -4,12 +4,16 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
 {
     private readonly object _gate = new();
 
+    public string ConfigPath { get; }
+
     private string? _organizationUrl;
     private string? _personalAccessToken;
     private string? _project;
 
-    public AzureDevOpsConnectionState(string? organizationUrl, string? personalAccessToken, string? project)
+    public AzureDevOpsConnectionState(string configPath, string? organizationUrl, string? personalAccessToken, string? project)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(configPath);
+        ConfigPath = Path.GetFullPath(configPath);
         _organizationUrl = NormalizeUrl(organizationUrl);
         _personalAccessToken = NormalizeString(personalAccessToken);
         _project = NormalizeString(project);
@@ -27,19 +31,42 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
 
     public AzureDevOpsConnectionInfo GetRequired()
     {
-        if (TryGetRequired(out var connection, out var missing))
+        if (TryGetRequired(out var connection, out _, out _))
             return connection;
 
-        throw new AzureMcpConfigurationException(missing);
+        throw new InvalidOperationException("Configuration is missing. Use TryGetRequired to get the actionable error.");
     }
 
-    public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out IReadOnlyList<string> missingEnvironmentVariables)
+    public bool TryGetRequired(
+        out AzureDevOpsConnectionInfo connection,
+        out ErrorInfo? error,
+        out IReadOnlyList<string>? missingEnvironmentVariables)
     {
         lock (_gate)
         {
-            var org = _organizationUrl ?? NormalizeUrl(Environment.GetEnvironmentVariable("AZURE_MCP_ORGANIZATION_URL"));
-            var pat = _personalAccessToken ?? NormalizeString(Environment.GetEnvironmentVariable("AZURE_MCP_PAT"));
-            var project = _project ?? NormalizeString(Environment.GetEnvironmentVariable("AZURE_MCP_PROJECT"));
+            var org = _organizationUrl;
+            var pat = _personalAccessToken;
+            var project = _project;
+
+            if (org is null || pat is null || project is null)
+            {
+                var configRead = TryReadConfigFile();
+                if (configRead.Error is not null)
+                {
+                    connection = default!;
+                    error = configRead.Error;
+                    missingEnvironmentVariables = null;
+                    return false;
+                }
+
+                org ??= NormalizeUrl(configRead.OrganizationUrl);
+                pat ??= NormalizeString(configRead.PersonalAccessToken);
+                project ??= NormalizeString(configRead.Project);
+            }
+
+            org ??= NormalizeUrl(Environment.GetEnvironmentVariable("AZURE_MCP_ORGANIZATION_URL"));
+            pat ??= NormalizeString(Environment.GetEnvironmentVariable("AZURE_MCP_PAT"));
+            project ??= NormalizeString(Environment.GetEnvironmentVariable("AZURE_MCP_PROJECT"));
 
             var missing = new List<string>();
             if (string.IsNullOrWhiteSpace(org)) missing.Add("AZURE_MCP_ORGANIZATION_URL");
@@ -48,6 +75,7 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
             if (missing.Count > 0)
             {
                 connection = default!;
+                error = AzureMcpErrors.MissingConfig(missing);
                 missingEnvironmentVariables = missing;
                 return false;
             }
@@ -57,9 +85,118 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
                 PersonalAccessToken: pat!,
                 Project: project);
 
-            missingEnvironmentVariables = Array.Empty<string>();
+            error = null;
+            missingEnvironmentVariables = null;
             return true;
         }
+    }
+
+    public bool TryPersist(out ErrorInfo? error)
+    {
+        lock (_gate)
+        {
+            try
+            {
+                var directory = Path.GetDirectoryName(ConfigPath);
+                if (!string.IsNullOrWhiteSpace(directory))
+                    Directory.CreateDirectory(directory);
+
+                var existing = TryReadConfigFile();
+                if (existing.Error is not null)
+                {
+                    // If the existing config is unreadable, we still allow rewriting it with current state.
+                    existing = (null, null, null, null);
+                }
+
+                var data = new ConfigFile
+                {
+                    OrganizationUrl = _organizationUrl ?? NormalizeUrl(existing.OrganizationUrl),
+                    PersonalAccessToken = _personalAccessToken ?? NormalizeString(existing.PersonalAccessToken),
+                    Project = _project ?? NormalizeString(existing.Project)
+                };
+
+                var json = System.Text.Json.JsonSerializer.Serialize(data, new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                    WriteIndented = true
+                });
+
+                File.WriteAllText(ConfigPath, json);
+
+                TrySetSecureFileMode(ConfigPath);
+
+                error = null;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = new ErrorInfo(
+                    "Failed to write AzureMcp config file",
+                    new Dictionary<string, string>
+                    {
+                        ["path"] = ConfigPath,
+                        ["exception"] = ex.GetType().Name,
+                        ["message"] = ex.Message
+                    });
+
+                return false;
+            }
+        }
+    }
+
+    private (string? OrganizationUrl, string? PersonalAccessToken, string? Project, ErrorInfo? Error) TryReadConfigFile()
+    {
+        try
+        {
+            if (!File.Exists(ConfigPath))
+                return (null, null, null, null);
+
+            var json = File.ReadAllText(ConfigPath);
+            if (string.IsNullOrWhiteSpace(json))
+                return (null, null, null, null);
+
+            var data = System.Text.Json.JsonSerializer.Deserialize<ConfigFile>(json, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return (data?.OrganizationUrl, data?.PersonalAccessToken, data?.Project, null);
+        }
+        catch (Exception ex)
+        {
+            return (null, null, null,
+                new ErrorInfo(
+                    "AzureMcp config file could not be read/parsed. Ask the user for the values and call `configure_connection` to rewrite the file.",
+                    new Dictionary<string, string>
+                    {
+                        ["path"] = ConfigPath,
+                        ["exception"] = ex.GetType().Name,
+                        ["message"] = ex.Message
+                    }));
+        }
+    }
+
+    private static void TrySetSecureFileMode(string path)
+    {
+        try
+        {
+            if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+                File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+        catch
+        {
+            // best-effort only
+        }
+    }
+
+    private sealed class ConfigFile
+    {
+        public string? OrganizationUrl { get; set; }
+
+        public string? PersonalAccessToken { get; set; }
+
+        public string? Project { get; set; }
     }
 
     private static string? NormalizeString(string? value)

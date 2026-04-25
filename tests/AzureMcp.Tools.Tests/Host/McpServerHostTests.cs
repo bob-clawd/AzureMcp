@@ -14,8 +14,9 @@ public sealed class McpServerHostTests
             ["AZURE_MCP_PROJECT"] = "PersonalProject"
         };
 
-        var options = McpServerHost.ParseOptions([], environment);
+        var options = McpServerHost.ParseOptions(["--config", "/tmp/azuremcp.json"], environment);
 
+        Assert.Equal("/tmp/azuremcp.json", options.ConfigPath);
         Assert.Equal("https://dev.azure.com/test-org", options.OrganizationUrl);
         Assert.Equal("secret-pat", options.PersonalAccessToken);
         Assert.Equal("PersonalProject", options.Project);
@@ -31,9 +32,10 @@ public sealed class McpServerHostTests
         };
 
         var options = McpServerHost.ParseOptions(
-            ["--organization-url", "https://dev.azure.com/cli-org", "--pat", "cli-pat"],
+            ["--config", "/tmp/azuremcp.json", "--organization-url", "https://dev.azure.com/cli-org", "--pat", "cli-pat"],
             environment);
 
+        Assert.Equal("/tmp/azuremcp.json", options.ConfigPath);
         Assert.Equal("https://dev.azure.com/cli-org", options.OrganizationUrl);
         Assert.Equal("cli-pat", options.PersonalAccessToken);
     }

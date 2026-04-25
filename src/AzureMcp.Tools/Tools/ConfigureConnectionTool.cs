@@ -40,6 +40,9 @@ public sealed class ConfigureConnectionTool(IAzureDevOpsConnectionState state) :
 
         state.Set(org, pat, proj);
 
+        if (!state.TryPersist(out var persistError))
+            return Task.FromResult(new ConfigureConnectionResponse(false, false, false, persistError));
+
         var orgSet = org is not null;
         var patSet = pat is not null;
         var projSet = proj is not null;

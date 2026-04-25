@@ -9,12 +9,13 @@ public static class ServiceExtensions
 {
     public static IServiceCollection WithAzureMcp(
         this IServiceCollection services,
+        string configPath,
         string? organizationUrl,
         string? personalAccessToken,
         string? project = null)
     {
         return services
-            .AddSingleton<IAzureDevOpsConnectionState>(new AzureDevOpsConnectionState(organizationUrl, personalAccessToken, project))
+            .AddSingleton<IAzureDevOpsConnectionState>(new AzureDevOpsConnectionState(configPath, organizationUrl, personalAccessToken, project))
             .AddInfrastructure()
             .AddImplementations<Tool>();
     }

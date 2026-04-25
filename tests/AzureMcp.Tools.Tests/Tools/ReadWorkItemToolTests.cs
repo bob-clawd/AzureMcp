@@ -1,6 +1,7 @@
 using AzureMcp.Tools.Tools;
 using AzureMcp.Tools.WorkItems;
 using AzureMcp.Tools.Configuration;
+using AzureMcp.Tools;
 
 namespace AzureMcp.Tools.Tests.Tools;
 
@@ -74,27 +75,45 @@ public sealed class ReadWorkItemToolTests
     {
         public AzureDevOpsConnectionInfo GetRequired() => new("https://dev.azure.com/test-org", "pat", null);
 
-        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out IReadOnlyList<string> missingEnvironmentVariables)
+        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error, out IReadOnlyList<string>? missingEnvironmentVariables)
         {
             connection = GetRequired();
-            missingEnvironmentVariables = Array.Empty<string>();
+            error = null;
+            missingEnvironmentVariables = null;
+            return true;
+        }
+
+        public bool TryPersist(out ErrorInfo? error)
+        {
+            error = null;
             return true;
         }
 
         public void Set(string? organizationUrl, string? personalAccessToken, string? project) { }
+
+        public string ConfigPath => "/tmp/azuremcp.json";
     }
 
     private sealed class MissingState : IAzureDevOpsConnectionState
     {
         public AzureDevOpsConnectionInfo GetRequired() => throw new InvalidOperationException();
 
-        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out IReadOnlyList<string> missingEnvironmentVariables)
+        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error, out IReadOnlyList<string>? missingEnvironmentVariables)
         {
             connection = default!;
             missingEnvironmentVariables = new[] { "AZURE_MCP_ORGANIZATION_URL", "AZURE_MCP_PAT" };
+            error = AzureMcpErrors.MissingConfig(missingEnvironmentVariables);
             return false;
         }
 
+        public bool TryPersist(out ErrorInfo? error)
+        {
+            error = null;
+            return true;
+        }
+
         public void Set(string? organizationUrl, string? personalAccessToken, string? project) { }
+
+        public string ConfigPath => "/tmp/azuremcp.json";
     }
 }

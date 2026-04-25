@@ -32,13 +32,20 @@ That gives us a real end-to-end slice to shape the architecture before adding mo
 
 ## Configuration
 
-AzureMcp reads its Azure DevOps connection settings from command-line arguments or environment variables.
+AzureMcp requires a config file path on startup and can then read connection settings from:
+
+1) command-line arguments
+2) config file
+3) environment variables
+
 Command-line arguments win.
 
 If required values are missing when you call a tool, the server will fail the call with a message that is meant to be actionable for an agent:
 ask the user for the missing value(s), then call `configure_connection`.
 
 ### Required
+
+- `--config <path>` (required)
 
 - `--organization-url` or `AZURE_MCP_ORGANIZATION_URL`
 - `--pat` or `AZURE_MCP_PAT`
@@ -63,7 +70,7 @@ export AZURE_MCP_PAT="your-pat"
 export AZURE_MCP_PROJECT="your-project" # optional
 
 export PATH="$PATH:/home/bob/.dotnet"
-dotnet run -c Release --project src/AzureMcp.Host/AzureMcp.Host.csproj
+dotnet run -c Release --project src/AzureMcp.Host/AzureMcp.Host.csproj -- --config ~/.config/azuremcp/config.json
 ```
 
 Or with explicit arguments:
@@ -71,6 +78,7 @@ Or with explicit arguments:
 ```bash
 export PATH="$PATH:/home/bob/.dotnet"
 dotnet run -c Release --project src/AzureMcp.Host/AzureMcp.Host.csproj -- \
+  --config ~/.config/azuremcp/config.json \
   --organization-url "https://dev.azure.com/your-org" \
   --pat "your-pat" \
   --project "your-project"

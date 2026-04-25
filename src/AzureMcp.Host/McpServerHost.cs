@@ -21,6 +21,7 @@ public static class McpServerHost
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(environmentVariables);
 
+        string? configPath = null;
         string? organizationUrl = null;
         string? project = null;
         string? personalAccessToken = null;
@@ -30,6 +31,9 @@ public static class McpServerHost
             var argument = args[index];
             switch (argument)
             {
+                case "--config":
+                    configPath = ReadSingleValueArgument(args, ref index, argument, configPath);
+                    break;
                 case "--organization-url":
                     organizationUrl = ReadSingleValueArgument(args, ref index, argument, organizationUrl);
                     break;
@@ -40,9 +44,14 @@ public static class McpServerHost
                     personalAccessToken = ReadSingleValueArgument(args, ref index, argument, personalAccessToken);
                     break;
                 default:
-                    throw new ArgumentException($"Unknown argument '{argument}'. Expected '--organization-url <url>' '--pat <token>' and optional '--project <name>'.", nameof(args));
+                    throw new ArgumentException($"Unknown argument '{argument}'. Expected '--config <path>' plus optional '--organization-url <url>' '--pat <token>' and '--project <name>'.", nameof(args));
             }
         }
+
+        if (string.IsNullOrWhiteSpace(configPath))
+            throw new ArgumentException("Missing required option '--config <path>'.", nameof(args));
+
+        configPath = Path.GetFullPath(configPath);
 
         organizationUrl ??= environmentVariables["AZURE_MCP_ORGANIZATION_URL"] as string;
         project ??= environmentVariables["AZURE_MCP_PROJECT"] as string;
@@ -62,6 +71,7 @@ public static class McpServerHost
 
         return new AzureMcpOptions
         {
+            ConfigPath = configPath,
             OrganizationUrl = normalizedOrganizationUrl,
             Project = string.IsNullOrWhiteSpace(project) ? null : project.Trim(),
             PersonalAccessToken = string.IsNullOrWhiteSpace(personalAccessToken) ? null : personalAccessToken.Trim()

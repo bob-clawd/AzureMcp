@@ -45,8 +45,8 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDe
         [Description("Azure DevOps work item id.")] int workItemId,
         CancellationToken cancellationToken = default)
     {
-        if (!connectionState.TryGetRequired(out var connection, out var missing))
-            return ReadWorkItemResponse.AsError(workItemId, AzureMcpErrors.MissingConfig(missing), missing);
+        if (!connectionState.TryGetRequired(out var connection, out var error, out var missing))
+            return ReadWorkItemResponse.AsError(workItemId, error!, missing);
 
         var result = await client.ReadWorkItemAsync(connection, workItemId, cancellationToken).ConfigureAwait(false);
         if (result.Error is not null)
