@@ -24,6 +24,9 @@ It accepts a work item id and returns a structured object with the fields that m
 - state
 - work item type
 - url
+- parent work item id (when present)
+- child work item ids
+- related work item ids
 
 That gives us a real end-to-end slice to shape the architecture before adding more tools.
 
@@ -88,6 +91,9 @@ Example response shape:
     "displayName": "Ada Lovelace",
     "uniqueName": "ada@example.com"
   },
+  "parentWorkItemId": 100,
+  "childWorkItemIds": [200, 201],
+  "relatedWorkItemIds": [300],
   "url": "https://dev.azure.com/your-org/_apis/wit/workItems/12345"
 }
 ```

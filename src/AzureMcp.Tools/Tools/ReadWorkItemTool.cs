@@ -12,6 +12,9 @@ public sealed record ReadWorkItemResponse(
     string? DescriptionText,
     string? DescriptionHtml,
     AzureDevOpsAssignedTo? AssignedTo,
+    int? ParentWorkItemId,
+    IReadOnlyList<int> ChildWorkItemIds,
+    IReadOnlyList<int> RelatedWorkItemIds,
     string? Url);
 
 public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client) : Tool
@@ -32,6 +35,9 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client) : Tool
             DescriptionText: workItem.DescriptionText,
             DescriptionHtml: workItem.DescriptionHtml,
             AssignedTo: workItem.AssignedTo,
+            ParentWorkItemId: workItem.ParentWorkItemId,
+            ChildWorkItemIds: workItem.ChildWorkItemIds,
+            RelatedWorkItemIds: workItem.RelatedWorkItemIds,
             Url: workItem.Url);
     }
 }

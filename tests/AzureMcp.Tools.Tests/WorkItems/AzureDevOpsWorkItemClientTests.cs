@@ -13,6 +13,24 @@ public sealed class AzureDevOpsWorkItemClientTests
         {
           "id": 12345,
           "url": "https://dev.azure.com/test-org/_apis/wit/workItems/12345",
+          "relations": [
+            {
+              "rel": "System.LinkTypes.Hierarchy-Reverse",
+              "url": "https://dev.azure.com/test-org/_apis/wit/workItems/100"
+            },
+            {
+              "rel": "System.LinkTypes.Hierarchy-Forward",
+              "url": "https://dev.azure.com/test-org/_apis/wit/workItems/200"
+            },
+            {
+              "rel": "System.LinkTypes.Hierarchy-Forward",
+              "url": "https://dev.azure.com/test-org/_apis/wit/workItems/201"
+            },
+            {
+              "rel": "System.LinkTypes.Related",
+              "url": "https://dev.azure.com/test-org/_apis/wit/workItems/300"
+            }
+          ],
           "fields": {
             "System.Title": "Improve deployment diagnostics",
             "System.State": "Active",
@@ -44,6 +62,9 @@ public sealed class AzureDevOpsWorkItemClientTests
         Assert.Equal("Ada Lovelace", workItem.AssignedTo?.DisplayName);
         Assert.Equal("ada@example.com", workItem.AssignedTo?.UniqueName);
         Assert.Equal("Investigate missing logs during deployment.\n\nCheck retention.", workItem.DescriptionText);
+        Assert.Equal(100, workItem.ParentWorkItemId);
+        Assert.Equal(new[] { 200, 201 }, workItem.ChildWorkItemIds);
+        Assert.Equal(new[] { 300 }, workItem.RelatedWorkItemIds);
     }
 
     [Fact]

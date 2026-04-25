@@ -30,6 +30,9 @@ public sealed class ReadWorkItemToolTests
                 DescriptionText: "Look at the failed release logs.",
                 DescriptionHtml: "<div>Look at the failed release logs.</div>",
                 AssignedTo: new AzureDevOpsAssignedTo("Grace Hopper", "grace@example.com"),
+                ParentWorkItemId: 1,
+                ChildWorkItemIds: new[] { 2, 3 },
+                RelatedWorkItemIds: new[] { 99 },
                 Url: $"https://dev.azure.com/test-org/_apis/wit/workItems/{workItemId}"));
     }
 }
