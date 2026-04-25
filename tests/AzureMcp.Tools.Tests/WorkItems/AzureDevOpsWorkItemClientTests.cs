@@ -80,7 +80,7 @@ public sealed class AzureDevOpsWorkItemClientTests
 
         var result = await client.ReadWorkItemAsync(connection, 404);
         result.Error.IsNotNull();
-        result.Error!.Message.Contains("not found", StringComparison.OrdinalIgnoreCase).IsTrue();
+        result.Error!.Message.ToLowerInvariant().IsContaining("not found");
     }
 
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler

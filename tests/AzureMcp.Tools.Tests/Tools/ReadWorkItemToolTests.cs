@@ -31,10 +31,10 @@ public sealed class ReadWorkItemToolTests
         var result = await tool.ExecuteAsync(123);
 
         result.Error.IsNotNull();
-        result.Error!.Message.Contains("Missing:", StringComparison.Ordinal).IsTrue();
-        result.Error!.Message.Contains("organizationUrl", StringComparison.Ordinal).IsTrue();
-        result.Error!.Message.Contains("personalAccessToken", StringComparison.Ordinal).IsTrue();
-        result.Error!.Message.Contains("config file", StringComparison.Ordinal).IsTrue();
+        result.Error!.Message.IsContaining("Missing:");
+        result.Error!.Message.IsContaining("organizationUrl");
+        result.Error!.Message.IsContaining("personalAccessToken");
+        result.Error!.Message.IsContaining("config file");
         client.Calls.Is(0);
     }
 
