@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\AzureMcp.Tools\AzureMcp.Tools.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.3" />
+    <PackageReference Include="ModelContextProtocol" Version="1.1.0" />
+  </ItemGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>AzureMcp</PackageId>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>azuremcp</ToolCommandName>
+    <Version>0.1.0</Version>
+    <Authors>bob-clawd</Authors>
+    <Description>Small personal Azure DevOps MCP server.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/bob-clawd/AzureMcp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/bob-clawd/AzureMcp</RepositoryUrl>
+    <PackageOutputPath>../../.nupkg</PackageOutputPath>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>mcp;azure;azure-devops;dotnet;agent;tooling</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\assets\icon.png" Pack="true" PackagePath="\" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>
