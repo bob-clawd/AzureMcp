@@ -15,7 +15,6 @@ public sealed class GetContextToolTests
         var result = await tool.ExecuteAsync(3);
 
         result.Error.IsNull();
-        result.RootWorkItemId.Is(1);
         result.Tickets.Select(item => item.Id).Is(1, 2, 3, 4);
         result.Tickets.Select(item => item.DescriptionText).Is(
             "Root description",
@@ -34,7 +33,6 @@ public sealed class GetContextToolTests
 
         rootResult.Error.IsNull();
         childResult.Error.IsNull();
-        rootResult.RootWorkItemId.Is(childResult.RootWorkItemId);
         rootResult.Tickets.Select(item => item.Id).Is(childResult.Tickets.Select(item => item.Id).ToArray());
         rootResult.Tickets.Select(item => item.DescriptionText).Is(childResult.Tickets.Select(item => item.DescriptionText).ToArray());
     }

@@ -6,12 +6,11 @@ using ModelContextProtocol.Server;
 namespace AzureMcp.Tools.Tools;
 
 public sealed record GetContextResponse(
-    int RootWorkItemId,
     IReadOnlyList<Ticket> Tickets,
     ErrorInfo? Error = null)
 {
     public static GetContextResponse AsError(ErrorInfo error)
-        => new(0, Array.Empty<Ticket>(), error);
+        => new(Array.Empty<Ticket>(), error);
 }
 
 public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevOpsConnectionState connectionState) : Tool
@@ -44,7 +43,7 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         if (traversalResult is not null)
             return GetContextResponse.AsError(traversalResult);
 
-        return new GetContextResponse(rootResult.Root.Id, tickets);
+        return new GetContextResponse(tickets);
     }
 
     private async Task<(AzureDevOpsWorkItem? Root, ErrorInfo? Error)> FindRootAsync(

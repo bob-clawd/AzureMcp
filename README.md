@@ -85,7 +85,6 @@ Example response shape:
 
 ```json
 {
-  "rootWorkItemId": 100,
   "tickets": [
     {
       "id": 100,
