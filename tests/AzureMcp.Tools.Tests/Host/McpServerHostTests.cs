@@ -5,20 +5,18 @@ namespace AzureMcp.Tools.Tests.Host;
 public sealed class McpServerHostTests
 {
     [Fact]
-    public void ParseOptions_UsesEnvironmentVariables_WhenArgumentsMissing()
+    public void ParseOptions_ParsesConfigPath()
     {
-        var options = McpServerHost.ParseOptions(["--config", "/tmp/azuremcp.json"], new Dictionary<string, string?>());
+        var options = McpServerHost.ParseOptions(["--config", "/tmp/azuremcp.json"]);
 
         Assert.Equal("/tmp/azuremcp.json", options.ConfigPath);
     }
 
     [Fact]
-    public void ParseOptions_ArgumentsOverrideEnvironmentVariables()
+    public void ParseOptions_NormalizesConfigPath_ToFullPath()
     {
-        var options = McpServerHost.ParseOptions(
-            ["--config", "/tmp/azuremcp.json"],
-            new Dictionary<string, string?>());
+        var options = McpServerHost.ParseOptions(["--config", "./azuremcp.json"]);
 
-        Assert.Equal("/tmp/azuremcp.json", options.ConfigPath);
+        Assert.Equal(Path.GetFullPath("./azuremcp.json"), options.ConfigPath);
     }
 }

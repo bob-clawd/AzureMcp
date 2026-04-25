@@ -18,7 +18,7 @@ Responsibilities:
 
 - process startup
 - MCP host wiring
-- argument/environment parsing
+- argument parsing
 - dependency composition
 
 This project should stay thin.
@@ -66,18 +66,14 @@ This slice establishes the default pattern for future tools:
 
 ## Configuration
 
-Server configuration currently supports:
+AzureMcp requires a config file path on startup:
 
-- `organization-url` (required)
-- `pat` (required)
-- `project` (optional, reserved for later tools)
+- `--config <path>`
 
-Resolution order:
+The config file is the source of truth for Azure DevOps connection values.
 
-1. command-line arguments
-2. environment variables
-
-That makes local dev and hosted MCP usage both straightforward.
+If required values are missing/invalid when you call a tool, the server returns an actionable error:
+ask the user for the missing value(s), then call `configure_connection` to rewrite the config file.
 
 ## Extension strategy
 

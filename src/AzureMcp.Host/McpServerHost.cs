@@ -7,7 +7,7 @@ public static class McpServerHost
 {
     public static async Task RunAsync(string[] args, CancellationToken cancellationToken = default)
     {
-        var options = ParseOptions(args, Environment.GetEnvironmentVariables());
+        var options = ParseOptions(args);
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args);
         builder.Logging.ClearProviders();
         builder.Services.Compose(options);
@@ -16,10 +16,9 @@ public static class McpServerHost
         await host.RunAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    internal static AzureMcpOptions ParseOptions(string[] args, System.Collections.IDictionary environmentVariables)
+    internal static AzureMcpOptions ParseOptions(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
-        ArgumentNullException.ThrowIfNull(environmentVariables);
 
         string? configPath = null;
 
