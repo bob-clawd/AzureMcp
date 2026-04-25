@@ -9,13 +9,13 @@ namespace AzureMcp.Tools.WorkItems;
 
 public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDevOpsWorkItemClient
 {
-    public async Task<ReadWorkItemResult> ReadWorkItemAsync(
+    public async Task<(Ticket? Ticket, ErrorInfo? Error)> ReadWorkItemAsync(
         AzureDevOpsConnectionInfo connection,
         int workItemId,
         CancellationToken cancellationToken = default)
     {
         if (workItemId <= 0)
-            return ReadWorkItemResult.AsError(
+            return AsError(
                 "workItemId must be greater than zero",
                 new Dictionary<string, string> { ["workItemId"] = workItemId.ToString() });
 
@@ -33,7 +33,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         }
         catch (HttpRequestException ex)
         {
-            return ReadWorkItemResult.AsError(
+            return AsError(
                 "Azure DevOps request failed (network/infrastructure error)",
                 new Dictionary<string, string>
                 {
@@ -48,7 +48,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         {
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                return ReadWorkItemResult.AsError(
+                return AsError(
                     "work item not found",
                     new Dictionary<string, string>
                     {
@@ -60,7 +60,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
 
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
-                return ReadWorkItemResult.AsError(
+                return AsError(
                     "Azure DevOps request not authorized. Ask the user for a valid PAT (and required scopes), then update the config file.",
                     new Dictionary<string, string>
                     {
@@ -84,7 +84,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
                 if (!string.IsNullOrWhiteSpace(body))
                     details["bodySnippet"] = body;
 
-                return ReadWorkItemResult.AsError(
+                return AsError(
                     $"Azure DevOps request failed ({(int)response.StatusCode} {response.StatusCode})",
                     details);
             }
@@ -95,11 +95,11 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
                 using var document = await JsonDocument.ParseAsync(contentStream, cancellationToken: cancellationToken).ConfigureAwait(false);
 
                 var ticket = Parse(document.RootElement);
-                return new ReadWorkItemResult(ticket);
+                return (ticket, null);
             }
             catch (JsonException ex)
             {
-                return ReadWorkItemResult.AsError(
+                return AsError(
                     "Azure DevOps response could not be parsed as JSON",
                     new Dictionary<string, string>
                     {
@@ -111,6 +111,11 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             }
         }
     }
+
+    private static (Ticket? Ticket, ErrorInfo? Error) AsError(
+        string message,
+        IReadOnlyDictionary<string, string>? details = null)
+        => (null, new ErrorInfo(message, details));
 
     private static async Task<string?> TryReadBodySnippet(HttpResponseMessage response, CancellationToken cancellationToken)
     {

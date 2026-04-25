@@ -92,17 +92,17 @@ public sealed class GetContextToolTests
                 ChildTicketIds: [])
         };
 
-        public Task<ReadWorkItemResult> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
-            => Task.FromResult(_items.TryGetValue(workItemId, out var item)
-                ? new ReadWorkItemResult(item)
-                : ReadWorkItemResult.AsError("work item not found"));
+        public Task<(Ticket? Ticket, ErrorInfo? Error)> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
+            => Task.FromResult<(Ticket? Ticket, ErrorInfo? Error)>(_items.TryGetValue(workItemId, out var item)
+                ? (item, null)
+                : (null, new ErrorInfo("work item not found")));
     }
 
     private sealed class SpyClient : IAzureDevOpsWorkItemClient
     {
         public int Calls { get; private set; }
 
-        public Task<ReadWorkItemResult> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
+        public Task<(Ticket? Ticket, ErrorInfo? Error)> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
         {
             Calls++;
             throw new InvalidOperationException("Client should not be called when configuration is missing.");

@@ -42,7 +42,7 @@ public sealed class ReadWorkItemToolTests
 
     private sealed class FakeClient : IAzureDevOpsWorkItemClient
     {
-        public Task<ReadWorkItemResult> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
+        public Task<(Ticket? Ticket, ErrorInfo? Error)> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
         {
             var ticket = new Ticket(
                 Id: workItemId,
@@ -54,7 +54,7 @@ public sealed class ReadWorkItemToolTests
                 ParentTicketId: 1,
                 ChildTicketIds: new[] { 2, 3 });
 
-            return Task.FromResult(new ReadWorkItemResult(ticket));
+            return Task.FromResult<(Ticket? Ticket, ErrorInfo? Error)>((ticket, null));
         }
     }
 
@@ -62,7 +62,7 @@ public sealed class ReadWorkItemToolTests
     {
         public int Calls { get; private set; }
 
-        public Task<ReadWorkItemResult> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
+        public Task<(Ticket? Ticket, ErrorInfo? Error)> ReadWorkItemAsync(AzureDevOpsConnectionInfo connection, int workItemId, CancellationToken cancellationToken = default)
         {
             Calls++;
             throw new InvalidOperationException("Client should not be called when configuration is missing.");

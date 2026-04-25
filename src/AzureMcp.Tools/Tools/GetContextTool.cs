@@ -104,14 +104,14 @@ public sealed class GetContextTool(IAzureDevOpsWorkItemClient client, IAzureDevO
         return null;
     }
 
-    private async Task<ReadWorkItemResult> LoadAsync(
+    private async Task<(Ticket? Ticket, ErrorInfo? Error)> LoadAsync(
         AzureDevOpsConnectionInfo connection,
         int workItemId,
         IDictionary<int, Ticket> cache,
         CancellationToken cancellationToken)
     {
         if (cache.TryGetValue(workItemId, out var cached))
-            return new ReadWorkItemResult(cached);
+            return (cached, null);
 
         var result = await client.ReadWorkItemAsync(connection, workItemId, cancellationToken).ConfigureAwait(false);
         if (result.Ticket is not null)
