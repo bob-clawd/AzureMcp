@@ -27,6 +27,14 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
 
     public AzureDevOpsConnectionInfo GetRequired()
     {
+        if (TryGetRequired(out var connection, out var missing))
+            return connection;
+
+        throw new AzureMcpConfigurationException(missing);
+    }
+
+    public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out IReadOnlyList<string> missingEnvironmentVariables)
+    {
         lock (_gate)
         {
             var org = _organizationUrl ?? NormalizeUrl(Environment.GetEnvironmentVariable("AZURE_MCP_ORGANIZATION_URL"));
@@ -38,12 +46,19 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
             if (string.IsNullOrWhiteSpace(pat)) missing.Add("AZURE_MCP_PAT");
 
             if (missing.Count > 0)
-                throw new AzureMcpConfigurationException(missing);
+            {
+                connection = default!;
+                missingEnvironmentVariables = missing;
+                return false;
+            }
 
-            return new AzureDevOpsConnectionInfo(
+            connection = new AzureDevOpsConnectionInfo(
                 OrganizationUrl: org!,
                 PersonalAccessToken: pat!,
                 Project: project);
+
+            missingEnvironmentVariables = Array.Empty<string>();
+            return true;
         }
     }
 

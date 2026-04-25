@@ -17,10 +17,27 @@ public sealed record ReadWorkItemResponse(
     IReadOnlyList<int> ChildWorkItemIds,
     IReadOnlyList<int> RelatedWorkItemIds,
     string? Url,
-    string? Error,
-    IReadOnlyList<string>? MissingEnvironmentVariables);
+    ErrorInfo? Error = null,
+    IReadOnlyList<string>? MissingEnvironmentVariables = null)
+{
+    public static ReadWorkItemResponse AsError(int workItemId, string message, IReadOnlyList<string>? missingEnvironmentVariables = null)
+        => new(
+            Id: workItemId,
+            Title: null,
+            State: null,
+            WorkItemType: null,
+            DescriptionText: null,
+            DescriptionHtml: null,
+            AssignedTo: null,
+            ParentWorkItemId: null,
+            ChildWorkItemIds: Array.Empty<int>(),
+            RelatedWorkItemIds: Array.Empty<int>(),
+            Url: null,
+            Error: new ErrorInfo(message),
+            MissingEnvironmentVariables: missingEnvironmentVariables);
+}
 
-public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client) : Tool
+public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDevOpsConnectionState connectionState) : Tool
 {
     [McpServerTool(Name = "read_work_item", Title = "Read Work Item", ReadOnly = true, Idempotent = true)]
     [Description("Load a single Azure DevOps work item by id and return a structured view with the key fields needed for everyday work.")]
@@ -28,41 +45,28 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client) : Tool
         [Description("Azure DevOps work item id.")] int workItemId,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var workItem = await client.ReadWorkItemAsync(workItemId, cancellationToken).ConfigureAwait(false);
+        if (!connectionState.TryGetRequired(out _, out var missing))
+            return ReadWorkItemResponse.AsError(workItemId, BuildMissingConfigMessage(missing), missing);
 
-            return new ReadWorkItemResponse(
-                Id: workItem.Id,
-                Title: workItem.Title,
-                State: workItem.State,
-                WorkItemType: workItem.WorkItemType,
-                DescriptionText: workItem.DescriptionText,
-                DescriptionHtml: workItem.DescriptionHtml,
-                AssignedTo: workItem.AssignedTo,
-                ParentWorkItemId: workItem.ParentWorkItemId,
-                ChildWorkItemIds: workItem.ChildWorkItemIds,
-                RelatedWorkItemIds: workItem.RelatedWorkItemIds,
-                Url: workItem.Url,
-                Error: null,
-                MissingEnvironmentVariables: null);
-        }
-        catch (AzureMcpConfigurationException ex)
-        {
-            return new ReadWorkItemResponse(
-                Id: workItemId,
-                Title: null,
-                State: null,
-                WorkItemType: null,
-                DescriptionText: null,
-                DescriptionHtml: null,
-                AssignedTo: null,
-                ParentWorkItemId: null,
-                ChildWorkItemIds: Array.Empty<int>(),
-                RelatedWorkItemIds: Array.Empty<int>(),
-                Url: null,
-                Error: ex.Message,
-                MissingEnvironmentVariables: ex.MissingKeys);
-        }
+        var workItem = await client.ReadWorkItemAsync(workItemId, cancellationToken).ConfigureAwait(false);
+
+        return new ReadWorkItemResponse(
+            Id: workItem.Id,
+            Title: workItem.Title,
+            State: workItem.State,
+            WorkItemType: workItem.WorkItemType,
+            DescriptionText: workItem.DescriptionText,
+            DescriptionHtml: workItem.DescriptionHtml,
+            AssignedTo: workItem.AssignedTo,
+            ParentWorkItemId: workItem.ParentWorkItemId,
+            ChildWorkItemIds: workItem.ChildWorkItemIds,
+            RelatedWorkItemIds: workItem.RelatedWorkItemIds,
+            Url: workItem.Url);
+    }
+
+    private static string BuildMissingConfigMessage(IReadOnlyList<string> missing)
+    {
+        var keys = string.Join(", ", missing);
+        return $"AzureMcp is not configured. Missing: {keys}. Ask the user for the value(s), then call `configure_connection` with the provided values.";
     }
 }

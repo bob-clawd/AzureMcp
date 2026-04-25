@@ -9,7 +9,7 @@ public sealed class ReadWorkItemToolTests
     [Fact]
     public async Task ExecuteAsync_MapsClientResultToToolResponse()
     {
-        var tool = new ReadWorkItemTool(new FakeClient());
+        var tool = new ReadWorkItemTool(new FakeClient(), new ConfiguredState());
 
         var result = await tool.ExecuteAsync(42);
 
@@ -22,17 +22,20 @@ public sealed class ReadWorkItemToolTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ReturnsErrorString_WhenNotConfigured()
+    public async Task ExecuteAsync_ReturnsError_WhenNotConfigured_WithoutCallingClient()
     {
-        var tool = new ReadWorkItemTool(new UnconfiguredClient());
+        var client = new SpyClient();
+        var tool = new ReadWorkItemTool(client, new MissingState());
 
         var result = await tool.ExecuteAsync(123);
 
         Assert.NotNull(result.Error);
-        Assert.Contains("Missing:", result.Error);
-        Assert.Contains("AZURE_MCP_PAT", result.Error);
-        Assert.Contains("AZURE_MCP_ORGANIZATION_URL", result.Error);
-        Assert.Contains("configure_connection", result.Error);
+        Assert.Contains("Missing:", result.Error!.Message);
+        Assert.Contains("AZURE_MCP_PAT", result.Error!.Message);
+        Assert.Contains("AZURE_MCP_ORGANIZATION_URL", result.Error!.Message);
+        Assert.Contains("configure_connection", result.Error!.Message);
+        Assert.Equal(new[] { "AZURE_MCP_ORGANIZATION_URL", "AZURE_MCP_PAT" }, result.MissingEnvironmentVariables);
+        Assert.Equal(0, client.Calls);
     }
 
     private sealed class FakeClient : IAzureDevOpsWorkItemClient
@@ -52,12 +55,42 @@ public sealed class ReadWorkItemToolTests
                 Url: $"https://dev.azure.com/test-org/_apis/wit/workItems/{workItemId}"));
     }
 
-    private sealed class UnconfiguredClient : IAzureDevOpsWorkItemClient
+    private sealed class SpyClient : IAzureDevOpsWorkItemClient
     {
+        public int Calls { get; private set; }
+
         public Task<AzureDevOpsWorkItem> ReadWorkItemAsync(int workItemId, CancellationToken cancellationToken = default)
-            => throw new AzureMcpConfigurationException([
-                "AZURE_MCP_ORGANIZATION_URL",
-                "AZURE_MCP_PAT"
-            ]);
+        {
+            Calls++;
+            throw new InvalidOperationException("Client should not be called when configuration is missing.");
+        }
+    }
+
+    private sealed class ConfiguredState : IAzureDevOpsConnectionState
+    {
+        public AzureDevOpsConnectionInfo GetRequired() => new("https://dev.azure.com/test-org", "pat", null);
+
+        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out IReadOnlyList<string> missingEnvironmentVariables)
+        {
+            connection = GetRequired();
+            missingEnvironmentVariables = Array.Empty<string>();
+            return true;
+        }
+
+        public void Set(string? organizationUrl, string? personalAccessToken, string? project) { }
+    }
+
+    private sealed class MissingState : IAzureDevOpsConnectionState
+    {
+        public AzureDevOpsConnectionInfo GetRequired() => throw new InvalidOperationException();
+
+        public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out IReadOnlyList<string> missingEnvironmentVariables)
+        {
+            connection = default!;
+            missingEnvironmentVariables = new[] { "AZURE_MCP_ORGANIZATION_URL", "AZURE_MCP_PAT" };
+            return false;
+        }
+
+        public void Set(string? organizationUrl, string? personalAccessToken, string? project) { }
     }
 }
