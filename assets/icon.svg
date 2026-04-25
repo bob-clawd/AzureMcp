@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="AzureMcp icon">
+  <defs>
+    <linearGradient id="azureMain" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#26B0FF"/>
+      <stop offset="100%" stop-color="#0078D4"/>
+    </linearGradient>
+    <linearGradient id="azureDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#005A9E"/>
+      <stop offset="100%" stop-color="#003B6B"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#0A2540" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="#F4F9FE"/>
+  <g filter="url(#shadow)">
+    <path d="M512 118 786 276 786 603 512 820 238 603 238 276Z" fill="url(#azureMain)"/>
+    <path d="M512 362 786 276 786 603 512 820Z" fill="url(#azureDark)" opacity="0.92"/>
+    <path d="M512 118 238 276 512 362Z" fill="#64CBFF" opacity="0.9"/>
+    <rect x="346" y="286" width="332" height="270" rx="34" fill="#FFFFFF"/>
+    <path d="M346 286H474L430 360H346Z" fill="#D6EEFF"/>
+    <rect x="410" y="388" width="204" height="22" rx="11" fill="#D8EAF8"/>
+    <rect x="410" y="434" width="180" height="22" rx="11" fill="#D8EAF8"/>
+    <rect x="410" y="480" width="224" height="22" rx="11" fill="#D8EAF8"/>
+    <path d="M392 670 512 724 632 670Z" fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M392 670 512 724M512 724 632 670M392 670 632 670" fill="none" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round"/>
+    <circle cx="392" cy="670" r="44" fill="#FFFFFF"/>
+    <circle cx="512" cy="724" r="44" fill="#FFFFFF"/>
+    <circle cx="632" cy="670" r="44" fill="#FFFFFF"/>
+    <circle cx="392" cy="670" r="18" fill="#0A2540"/>
+    <circle cx="512" cy="724" r="18" fill="#0A2540"/>
+    <circle cx="632" cy="670" r="18" fill="#0A2540"/>
+  </g>
+</svg>
