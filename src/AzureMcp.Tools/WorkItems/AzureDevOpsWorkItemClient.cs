@@ -143,18 +143,21 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         var parentId = TryGetLinkedWorkItemId(relations, "System.LinkTypes.Hierarchy-Reverse");
         var childIds = GetLinkedWorkItemIds(relations, "System.LinkTypes.Hierarchy-Forward");
         var branches = GetLinkedGitBranches(relations);
-        var pullRequestIds = GetLinkedPullRequestIds(relations);
-        return new Ticket(
-            Id: root.GetProperty("id").GetInt32(),
-            Title: GetString(fields, "System.Title"),
-            State: GetString(fields, "System.State"),
-            WorkItemType: GetString(fields, "System.WorkItemType"),
-            DescriptionText: ToPlainText(descriptionHtml),
-            AssignedTo: ParseAssignedTo(fields),
-            ParentId: parentId,
-            ChildrenIds: childIds,
-            Branches: branches,
-            PullRequestIds: pullRequestIds);
+        var pullRequestRefs = GetLinkedPullRequestRefs(relations);
+
+        return new Ticket
+        {
+            Id = root.GetProperty("id").GetInt32(),
+            Title = GetString(fields, "System.Title"),
+            State = GetString(fields, "System.State"),
+            WorkItemType = GetString(fields, "System.WorkItemType"),
+            DescriptionText = ToPlainText(descriptionHtml),
+            AssignedTo = ParseAssignedTo(fields),
+            ParentId = parentId,
+            ChildrenIds = childIds,
+            Branches = branches,
+            PullRequestRefs = pullRequestRefs
+        };
     }
 
     private static IReadOnlyList<string> GetLinkedGitBranches(JsonElement relations)
@@ -180,26 +183,26 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             .ToArray();
     }
 
-    private static IReadOnlyList<int> GetLinkedPullRequestIds(JsonElement relations)
+    private static IReadOnlyList<PullRequestRef> GetLinkedPullRequestRefs(JsonElement relations)
     {
         if (relations.ValueKind != JsonValueKind.Array)
-            return Array.Empty<int>();
+            return Array.Empty<PullRequestRef>();
 
-        var ids = new List<int>();
+        var refs = new List<PullRequestRef>();
 
         foreach (var relation in relations.EnumerateArray())
         {
             if (!TryGetRelationUrl(relation, "ArtifactLink", out var url))
                 continue;
 
-            var id = TryParsePullRequestIdFromArtifactUrl(url);
-            if (id is not null)
-                ids.Add(id.Value);
+            var parsed = TryParsePullRequestRefFromArtifactUrl(url);
+            if (parsed is not null)
+                refs.Add(parsed);
         }
 
-        return ids
+        return refs
             .Distinct()
-            .OrderBy(static x => x)
+            .OrderBy(static x => x.PullRequestId)
             .ToArray();
     }
 
@@ -220,7 +223,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         return !string.IsNullOrWhiteSpace(url);
     }
 
-    private static int? TryParsePullRequestIdFromArtifactUrl(string? url)
+    private static PullRequestRef? TryParsePullRequestRefFromArtifactUrl(string? url)
     {
         if (string.IsNullOrWhiteSpace(url))
             return null;
@@ -231,10 +234,17 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
 
         var tail = Uri.UnescapeDataString(url[prefix.Length..]);
         var parts = tail.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0)
+        if (parts.Length < 3)
             return null;
 
-        return int.TryParse(parts[^1], out var id) ? id : null;
+        var projectId = parts[0];
+        var repositoryId = parts[1];
+        if (string.IsNullOrWhiteSpace(projectId) || string.IsNullOrWhiteSpace(repositoryId))
+            return null;
+
+        return int.TryParse(parts[^1], out var id)
+            ? new PullRequestRef(projectId, repositoryId, id)
+            : null;
     }
 
     private static string? TryParseGitBranchFromArtifactUrl(string? url)

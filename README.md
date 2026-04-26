@@ -115,8 +115,7 @@ Example response shape:
     "assignedTo": "Ada Lovelace",
     "parentId": 100,
     "childrenIds": [200, 201],
-    "branches": ["feature/ado-12345"],
-    "pullRequestIds": [33]
+    "branches": ["feature/ado-12345"]
   },
   "error": null
 }

@@ -80,7 +80,6 @@ public sealed class AzureDevOpsWorkItemClientTests
         ticket.ParentId.Is(100);
         ticket.ChildrenIds.Is([200, 201]);
         ticket.Branches.Is(["feature/ado-12345"]);
-        ticket.PullRequestIds.Is([33]);
     }
 
     [Fact]

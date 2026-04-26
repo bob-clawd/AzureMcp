@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using AzureMcp.Tools.Git;
 using AzureMcp.Tools.WorkItems;
 using ModelContextProtocol.Server;
 using AzureMcp.Tools.Configuration;
@@ -12,7 +13,10 @@ public sealed record ReadWorkItemResponse(
     public static ReadWorkItemResponse AsError(ErrorInfo error) => new(null, error);
 }
 
-public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDevOpsConnectionState connectionState) : Tool
+public sealed class ReadWorkItemTool(
+    IAzureDevOpsWorkItemClient client,
+    IAzureDevOpsPullRequestClient pullRequestClient,
+    IAzureDevOpsConnectionState connectionState) : Tool
 {
     [McpServerTool(Name = "read_work_item", Title = "Read Work Item", ReadOnly = true, Idempotent = true)]
     [Description("Load a single Azure DevOps work item by id and return a structured view with the key fields needed for everyday work.")]
@@ -27,6 +31,34 @@ public sealed class ReadWorkItemTool(IAzureDevOpsWorkItemClient client, IAzureDe
         if (result.Error is not null)
             return ReadWorkItemResponse.AsError(result.Error);
 
-        return new ReadWorkItemResponse(result.Ticket!);
+        var ticket = result.Ticket!;
+
+        if (ticket.PullRequestRefs.Count == 0)
+            return new ReadWorkItemResponse(ticket);
+
+        const int maxPullRequestsToLoad = 10;
+        var pullRequests = new List<PullRequestInfo>();
+
+        foreach (var prRef in ticket.PullRequestRefs
+                     .OrderBy(static x => x.PullRequestId)
+                     .DistinctBy(static x => x.PullRequestId)
+                     .Take(maxPullRequestsToLoad))
+        {
+            var pr = await pullRequestClient.ReadPullRequestAsync(
+                connection,
+                prRef.ProjectId,
+                prRef.RepositoryId,
+                prRef.PullRequestId,
+                cancellationToken).ConfigureAwait(false);
+
+            if (pr.PullRequest is not null)
+                pullRequests.Add(pr.PullRequest);
+        }
+
+        if (pullRequests.Count == 0)
+            return new ReadWorkItemResponse(ticket);
+
+        ticket = ticket with { PullRequests = pullRequests };
+        return new ReadWorkItemResponse(ticket);
     }
 }

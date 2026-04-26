@@ -1,5 +1,6 @@
 using System.Reflection;
 using AzureMcp.Tools.Configuration;
+using AzureMcp.Tools.Git;
 using AzureMcp.Tools.WorkItems;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +23,7 @@ public static class ServiceExtensions
     private static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         services.AddHttpClient<IAzureDevOpsWorkItemClient, AzureDevOpsWorkItemClient>();
+        services.AddHttpClient<IAzureDevOpsPullRequestClient, AzureDevOpsPullRequestClient>();
 
         return services;
     }
