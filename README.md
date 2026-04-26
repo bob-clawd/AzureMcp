@@ -13,7 +13,7 @@ The goal is a small, composable toolbelt with a familiar architecture:
 
 ## First tools
 
-The current tools are `read_work_item` and `get_context`.
+The current tools are `read_work_item`, `get_context`, and `search_work_items`.
 
 `read_work_item` accepts a work item id and returns a structured object with the fields that matter first:
 
@@ -31,6 +31,16 @@ The current tools are `read_work_item` and `get_context`.
 That gives us a real end-to-end slice to shape the architecture before adding more tools.
 
 `get_context` accepts any work item id, walks upward to the topmost parent, then returns the parent chain context in stable order from parent to child.
+
+`search_work_items` accepts a free-text query and returns a compact ticket list with:
+
+- id
+- title
+- state
+- work item type
+- changed date
+
+By default it searches title only, excludes closed/done/removed items, and sorts open items first and then by most recently changed.
 
 ## Configuration
 
@@ -79,6 +89,35 @@ Input:
 {
   "workItemId": 12345
 }
+
+## Tool: `search_work_items`
+
+Input:
+
+```json
+{
+  "query": "deployment",
+  "top": 20,
+  "includeClosed": false,
+  "includeDescription": false
+}
+```
+
+Example response shape:
+
+```json
+{
+  "tickets": [
+    {
+      "id": 12345,
+      "title": "Improve deployment diagnostics",
+      "state": "Active",
+      "workItemType": "User Story",
+      "changedDate": "2026-04-26T07:00:00Z"
+    }
+  ]
+}
+```
 ```
 
 Example response shape:

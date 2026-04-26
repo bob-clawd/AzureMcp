@@ -9,6 +9,13 @@ namespace AzureMcp.Tools.WorkItems;
 
 public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDevOpsWorkItemClient
 {
+    private static readonly HashSet<string> ClosedStates = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Closed",
+        "Done",
+        "Removed"
+    };
+
     public async Task<(Ticket? Ticket, ErrorInfo? Error)> ReadWorkItemAsync(
         AzureDevOpsConnectionInfo connection,
         int workItemId,
@@ -112,10 +119,218 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         }
     }
 
+    public async Task<(IReadOnlyList<SearchTicketResult>? Results, ErrorInfo? Error)> SearchWorkItemsAsync(
+        AzureDevOpsConnectionInfo connection,
+        string query,
+        int top = 20,
+        bool includeClosed = false,
+        bool includeDescription = false,
+        CancellationToken cancellationToken = default)
+    {
+        query = query?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return (null, new ErrorInfo(
+                "query must not be empty",
+                new Dictionary<string, string> { ["query"] = query }));
+        }
+
+        if (top <= 0)
+        {
+            return (null, new ErrorInfo(
+                "top must be greater than zero",
+                new Dictionary<string, string> { ["top"] = top.ToString() }));
+        }
+
+        var requestUrl = BuildSearchUrl(connection);
+        var requestTop = includeClosed ? top : Math.Min(top * 3, 100);
+        var requestPayload = new Dictionary<string, object?>
+        {
+            ["searchText"] = query,
+            ["$skip"] = 0,
+            ["$top"] = requestTop,
+            ["$orderBy"] = new[]
+            {
+                new Dictionary<string, string>
+                {
+                    ["field"] = "system.changeddate",
+                    ["sortOrder"] = "DESC"
+                }
+            },
+            ["includeFacets"] = false
+        };
+
+        var requestBody = JsonSerializer.Serialize(requestPayload);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, requestUrl)
+        {
+            Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
+        };
+
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        var token = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{connection.PersonalAccessToken}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex)
+        {
+            return (null, new ErrorInfo(
+                "Azure DevOps search request failed (network/infrastructure error)",
+                new Dictionary<string, string>
+                {
+                    ["query"] = query,
+                    ["url"] = requestUrl,
+                    ["exception"] = ex.GetType().Name,
+                    ["message"] = ex.Message
+                }));
+        }
+
+        using (response)
+        {
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                return (null, new ErrorInfo(
+                    "Azure DevOps search request not authorized. Ask the user for a valid PAT (and required scopes), then update the config file.",
+                    new Dictionary<string, string>
+                    {
+                        ["query"] = query,
+                        ["status"] = ((int)response.StatusCode).ToString(),
+                        ["url"] = requestUrl
+                    }));
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await TryReadBodySnippet(response, cancellationToken).ConfigureAwait(false);
+                var details = new Dictionary<string, string>
+                {
+                    ["query"] = query,
+                    ["status"] = ((int)response.StatusCode).ToString(),
+                    ["reason"] = response.ReasonPhrase ?? string.Empty,
+                    ["url"] = requestUrl
+                };
+
+                if (!string.IsNullOrWhiteSpace(body))
+                    details["bodySnippet"] = body;
+
+                return (null, new ErrorInfo(
+                    $"Azure DevOps search request failed ({(int)response.StatusCode} {response.StatusCode})",
+                    details));
+            }
+
+            try
+            {
+                await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+                using var document = await JsonDocument.ParseAsync(contentStream, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                var results = ParseSearchResults(document.RootElement, query, top, includeClosed, includeDescription);
+                return (results, null);
+            }
+            catch (JsonException ex)
+            {
+                return (null, new ErrorInfo(
+                    "Azure DevOps search response could not be parsed as JSON",
+                    new Dictionary<string, string>
+                    {
+                        ["query"] = query,
+                        ["url"] = requestUrl,
+                        ["exception"] = ex.GetType().Name,
+                        ["message"] = ex.Message
+                    }));
+            }
+        }
+    }
+
     private static (Ticket? Ticket, ErrorInfo? Error) AsError(
         string message,
         IReadOnlyDictionary<string, string>? details = null)
         => (null, new ErrorInfo(message, details));
+
+    private static string BuildSearchUrl(AzureDevOpsConnectionInfo connection)
+    {
+        var organizationUri = new Uri(connection.OrganizationUrl, UriKind.Absolute);
+        var host = string.Equals(organizationUri.Host, "dev.azure.com", StringComparison.OrdinalIgnoreCase)
+            ? "almsearch.dev.azure.com"
+            : organizationUri.Host;
+
+        var path = organizationUri.AbsolutePath.Trim('/');
+        var segments = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(path))
+            segments.Add(path);
+
+        if (!string.IsNullOrWhiteSpace(connection.Project))
+            segments.Add(Uri.EscapeDataString(connection.Project));
+
+        var joinedPath = string.Join('/', segments);
+        return $"{organizationUri.Scheme}://{host}/{joinedPath}/_apis/search/workitemsearchresults?api-version=7.1";
+    }
+
+    internal static IReadOnlyList<SearchTicketResult> ParseSearchResults(
+        JsonElement root,
+        string query,
+        int top,
+        bool includeClosed,
+        bool includeDescription)
+    {
+        if (!root.TryGetProperty("results", out var resultsElement) || resultsElement.ValueKind != JsonValueKind.Array)
+            return Array.Empty<SearchTicketResult>();
+
+        var normalizedQuery = query.Trim();
+        var candidates = new List<SearchCandidate>();
+
+        foreach (var result in resultsElement.EnumerateArray())
+        {
+            if (!result.TryGetProperty("fields", out var fields) || fields.ValueKind != JsonValueKind.Object)
+                continue;
+
+            var idText = GetString(fields, "system.id");
+            if (!int.TryParse(idText, out var id))
+                continue;
+
+            var title = GetString(fields, "system.title");
+            var state = GetString(fields, "system.state");
+            var workItemType = GetString(fields, "system.workitemtype");
+            var changedDate = GetString(fields, "system.changeddate");
+            var changedDateValue = DateTimeOffset.TryParse(changedDate, out var parsedDate)
+                ? parsedDate
+                : DateTimeOffset.MinValue;
+
+            var hitFields = GetHitFields(result);
+            var hasTitleHit = hitFields.Contains("system.title")
+                || (!string.IsNullOrWhiteSpace(title)
+                    && title.Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase));
+            var hasDescriptionHit = hitFields.Contains("system.description");
+            var isClosed = IsClosedState(state);
+
+            if (!hasTitleHit && !(includeDescription && hasDescriptionHit))
+                continue;
+
+            if (!includeClosed && isClosed)
+                continue;
+
+            candidates.Add(new SearchCandidate(
+                new SearchTicketResult(id, title, state, workItemType, changedDate),
+                hasTitleHit,
+                hasDescriptionHit,
+                isClosed,
+                changedDateValue));
+        }
+
+        return candidates
+            .OrderBy(candidate => candidate.IsClosed)
+            .ThenByDescending(candidate => candidate.HasTitleHit)
+            .ThenByDescending(candidate => candidate.HasDescriptionHit)
+            .ThenByDescending(candidate => candidate.ChangedDate)
+            .Take(top)
+            .Select(static candidate => candidate.Result)
+            .ToArray();
+    }
 
     private static async Task<string?> TryReadBodySnippet(HttpResponseMessage response, CancellationToken cancellationToken)
     {
@@ -133,6 +348,29 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             return null;
         }
     }
+
+    private static HashSet<string> GetHitFields(JsonElement result)
+    {
+        if (!result.TryGetProperty("hits", out var hitsElement) || hitsElement.ValueKind != JsonValueKind.Array)
+            return [];
+
+        var fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var hit in hitsElement.EnumerateArray())
+        {
+            var fieldReferenceName = hit.TryGetProperty("fieldReferenceName", out var fieldElement)
+                ? fieldElement.GetString()
+                : null;
+
+            if (!string.IsNullOrWhiteSpace(fieldReferenceName))
+                fields.Add(fieldReferenceName);
+        }
+
+        return fields;
+    }
+
+    private static bool IsClosedState(string? state)
+        => !string.IsNullOrWhiteSpace(state) && ClosedStates.Contains(state);
 
     internal static Ticket Parse(JsonElement root)
     {
@@ -373,4 +611,11 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             .Replace("\n\n\n", "\n\n")
             .Trim();
     }
+
+    private sealed record SearchCandidate(
+        SearchTicketResult Result,
+        bool HasTitleHit,
+        bool HasDescriptionHit,
+        bool IsClosed,
+        DateTimeOffset ChangedDate);
 }

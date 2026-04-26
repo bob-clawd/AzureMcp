@@ -95,6 +95,147 @@ public sealed class AzureDevOpsWorkItemClientTests
         result.Error!.Message.ToLowerInvariant().IsContaining("not found");
     }
 
+    [Fact]
+    public async Task SearchWorkItemsAsync_UsesSearchEndpoint_AndFiltersToOpenTitleMatchesByDefault()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        string? capturedBody = null;
+
+        const string payload = """
+        {
+          "count": 3,
+          "results": [
+            {
+              "fields": {
+                "system.id": "11",
+                "system.title": "Deploy pipeline fails",
+                "system.state": "Active",
+                "system.workitemtype": "Bug",
+                "system.changeddate": "2026-04-26T07:00:00Z"
+              },
+              "hits": [
+                {
+                  "fieldReferenceName": "system.title",
+                  "highlights": ["<highlighthit>Deploy</highlighthit> pipeline fails"]
+                }
+              ]
+            },
+            {
+              "fields": {
+                "system.id": "12",
+                "system.title": "Investigate flaky tests",
+                "system.state": "Active",
+                "system.workitemtype": "Task",
+                "system.changeddate": "2026-04-26T06:00:00Z"
+              },
+              "hits": [
+                {
+                  "fieldReferenceName": "system.description",
+                  "highlights": ["fix <highlighthit>deploy</highlighthit> notes"]
+                }
+              ]
+            },
+            {
+              "fields": {
+                "system.id": "13",
+                "system.title": "Deploy docs cleanup",
+                "system.state": "Closed",
+                "system.workitemtype": "Task",
+                "system.changeddate": "2026-04-26T08:00:00Z"
+              },
+              "hits": [
+                {
+                  "fieldReferenceName": "system.title",
+                  "highlights": ["<highlighthit>Deploy</highlighthit> docs cleanup"]
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
+        {
+            capturedRequest = request;
+            capturedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload, Encoding.UTF8, "application/json")
+            };
+        }));
+
+        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", "Demo Project");
+
+        var result = await client.SearchWorkItemsAsync(connection, "deploy", top: 20, includeClosed: false, includeDescription: false);
+
+        result.Error.IsNull();
+        result.Results!.Select(ticket => ticket.Id).Is(11);
+        capturedRequest.IsNotNull();
+        capturedBody.IsNotNull();
+        var body = capturedBody!;
+        capturedRequest!.Method.Is(HttpMethod.Post);
+        capturedRequest.RequestUri!.AbsoluteUri.Is("https://almsearch.dev.azure.com/test-org/Demo%20Project/_apis/search/workitemsearchresults?api-version=7.1");
+        body.IsContaining("\"searchText\":\"deploy\"");
+        body.IsContaining("\"$top\":60");
+    }
+
+    [Fact]
+    public async Task SearchWorkItemsAsync_WhenIncludeDescriptionTrue_IncludesDescriptionMatches_AndKeepsTitleHitsFirst()
+    {
+        const string payload = """
+        {
+          "count": 2,
+          "results": [
+            {
+              "fields": {
+                "system.id": "21",
+                "system.title": "Deploy pipeline fails",
+                "system.state": "Active",
+                "system.workitemtype": "Bug",
+                "system.changeddate": "2026-04-26T07:00:00Z"
+              },
+              "hits": [
+                {
+                  "fieldReferenceName": "system.title",
+                  "highlights": ["<highlighthit>Deploy</highlighthit> pipeline fails"]
+                }
+              ]
+            },
+            {
+              "fields": {
+                "system.id": "22",
+                "system.title": "Investigate flaky tests",
+                "system.state": "New",
+                "system.workitemtype": "Task",
+                "system.changeddate": "2026-04-26T08:00:00Z"
+              },
+              "hits": [
+                {
+                  "fieldReferenceName": "system.description",
+                  "highlights": ["fix <highlighthit>deploy</highlighthit> notes"]
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        }));
+
+        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
+
+        var result = await client.SearchWorkItemsAsync(connection, "deploy", includeDescription: true);
+
+        result.Error.IsNull();
+        result.Results!.Select(ticket => ticket.Id).Is(21, 22);
+        result.Results!.Select(ticket => ticket.ChangedDate).Is("2026-04-26T07:00:00Z", "2026-04-26T08:00:00Z");
+    }
+
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

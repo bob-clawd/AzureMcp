@@ -8,6 +8,13 @@ public sealed record PullRequestInfo(
     int Id,
     string? DescriptionText);
 
+public sealed record SearchTicketResult(
+    int Id,
+    string? Title,
+    string? State,
+    string? WorkItemType,
+    string? ChangedDate);
+
 internal sealed record PullRequestRef(
     string ProjectId,
     string RepositoryId,

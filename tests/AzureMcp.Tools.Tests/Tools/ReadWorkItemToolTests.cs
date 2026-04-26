@@ -79,6 +79,9 @@ public sealed class ReadWorkItemToolTests
 
             return Task.FromResult<(Ticket? Ticket, ErrorInfo? Error)>((ticket, null));
         }
+
+        public Task<(IReadOnlyList<SearchTicketResult>? Results, ErrorInfo? Error)> SearchWorkItemsAsync(AzureDevOpsConnectionInfo connection, string query, int top = 20, bool includeClosed = false, bool includeDescription = false, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("SearchWorkItemsAsync should not be called in this test.");
     }
 
     private sealed class SpyClient : IAzureDevOpsWorkItemClient
@@ -90,6 +93,9 @@ public sealed class ReadWorkItemToolTests
             Calls++;
             throw new InvalidOperationException("Client should not be called when configuration is missing.");
         }
+
+        public Task<(IReadOnlyList<SearchTicketResult>? Results, ErrorInfo? Error)> SearchWorkItemsAsync(AzureDevOpsConnectionInfo connection, string query, int top = 20, bool includeClosed = false, bool includeDescription = false, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("SearchWorkItemsAsync should not be called in this test.");
     }
 
     private sealed class FakeClientWithPullRequests : IAzureDevOpsWorkItemClient
@@ -118,6 +124,9 @@ public sealed class ReadWorkItemToolTests
 
             return Task.FromResult<(Ticket? Ticket, ErrorInfo? Error)>((ticket, null));
         }
+
+        public Task<(IReadOnlyList<SearchTicketResult>? Results, ErrorInfo? Error)> SearchWorkItemsAsync(AzureDevOpsConnectionInfo connection, string query, int top = 20, bool includeClosed = false, bool includeDescription = false, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("SearchWorkItemsAsync should not be called in this test.");
     }
 
     private sealed class FakePullRequestClient : AzureMcp.Tools.Git.IAzureDevOpsPullRequestClient
