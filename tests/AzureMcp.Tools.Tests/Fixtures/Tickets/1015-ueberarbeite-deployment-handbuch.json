@@ -1,0 +1,15 @@
+{
+  "id": 1015,
+  "title": "Überarbeite Deployment-Handbuch",
+  "state": "Active",
+  "workItemType": "Task",
+  "descriptionText": "Sonderzeichen äöü und klare Doku-Fokussierung.",
+  "assignedTo": "Radia Perlman",
+  "parentId": null,
+  "childrenIds": [],
+  "branches": [
+    "docs/ado-1015"
+  ],
+  "pullRequestRefs": [],
+  "changedDate": "2026-04-25T17:30:00Z"
+}

@@ -22,4 +22,9 @@
     <ProjectReference Include="..\..\src\AzureMcp.Host\AzureMcp.Host.csproj" />
     <ProjectReference Include="..\..\src\AzureMcp.Tools\AzureMcp.Tools.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Fixtures/**/*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

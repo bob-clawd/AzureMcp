@@ -1,0 +1,16 @@
+{
+  "id": 1000,
+  "title": "Platform foundation",
+  "state": "Active",
+  "workItemType": "Feature",
+  "descriptionText": "Root description",
+  "assignedTo": null,
+  "parentId": null,
+  "childrenIds": [
+    1001,
+    1003
+  ],
+  "branches": [],
+  "pullRequestRefs": [],
+  "changedDate": "2026-04-20T09:00:00Z"
+}

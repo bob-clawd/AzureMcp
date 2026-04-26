@@ -1,0 +1,6 @@
+{
+  "id": 66,
+  "projectId": "99999999-9999-9999-9999-999999999999",
+  "repositoryId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "descriptionText": "Hardens auth retry handling after the hotfix."
+}

@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using AzureMcp.Tools.Clients;
 using AzureMcp.Tools.Configuration;
+using AzureMcp.Tools.Tests.Fixtures;
 
 namespace AzureMcp.Tools.Tests.WorkItems;
 
@@ -10,59 +11,12 @@ public sealed class AzureDevOpsWorkItemClientTests
     [Fact]
     public async Task ReadWorkItemAsync_ParsesStructuredResponse()
     {
-        const string payload = """
-        {
-          "id": 12345,
-          "relations": [
-            {
-              "rel": "System.LinkTypes.Hierarchy-Reverse",
-              "url": "https://dev.azure.com/test-org/_apis/wit/workItems/100"
-            },
-            {
-              "rel": "System.LinkTypes.Hierarchy-Forward",
-              "url": "https://dev.azure.com/test-org/_apis/wit/workItems/200"
-            },
-            {
-              "rel": "System.LinkTypes.Hierarchy-Forward",
-              "url": "https://dev.azure.com/test-org/_apis/wit/workItems/201"
-            },
-            {
-              "rel": "System.LinkTypes.Related",
-              "url": "https://dev.azure.com/test-org/_apis/wit/workItems/300"
-            },
-            {
-              "rel": "ArtifactLink",
-              "url": "vstfs:///Git/Ref/11111111-1111-1111-1111-111111111111%2F22222222-2222-2222-2222-222222222222%2Frefs%2Fheads%2Ffeature%2Fado-12345",
-              "attributes": {
-                "name": "Branch"
-              }
-            },
-            {
-              "rel": "ArtifactLink",
-              "url": "vstfs:///Git/PullRequestId/11111111-1111-1111-1111-111111111111%2F22222222-2222-2222-2222-222222222222%2F33",
-              "attributes": {
-                "name": "Pull Request"
-              }
-            }
-          ],
-          "fields": {
-            "System.Title": "Improve deployment diagnostics",
-            "System.State": "Active",
-            "System.WorkItemType": "User Story",
-            "System.Description": "<div><p>Investigate missing logs during deployment.</p><p>Check retention.</p></div>",
-            "System.AssignedTo": {
-              "displayName": "Ada Lovelace",
-              "uniqueName": "ada@example.com"
-            }
-          }
-        }
-        """;
+        var payload = FixtureCatalog.ReadText("ApiResponses", "work-item-12345.json");
 
         using var httpClient = new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(payload, Encoding.UTF8, "application/json")
-        }))
-        ;
+        }));
 
         var client = new AzureDevOpsWorkItemClient(httpClient);
         var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
@@ -100,59 +54,7 @@ public sealed class AzureDevOpsWorkItemClientTests
     {
         HttpRequestMessage? capturedRequest = null;
         string? capturedBody = null;
-
-        const string payload = """
-        {
-          "count": 3,
-          "results": [
-            {
-              "fields": {
-                "system.id": "11",
-                "system.title": "Deploy pipeline fails",
-                "system.state": "Active",
-                "system.workitemtype": "Bug",
-                "system.changeddate": "2026-04-26T07:00:00Z"
-              },
-              "hits": [
-                {
-                  "fieldReferenceName": "system.title",
-                  "highlights": ["<highlighthit>Deploy</highlighthit> pipeline fails"]
-                }
-              ]
-            },
-            {
-              "fields": {
-                "system.id": "12",
-                "system.title": "Investigate flaky tests",
-                "system.state": "Active",
-                "system.workitemtype": "Task",
-                "system.changeddate": "2026-04-26T06:00:00Z"
-              },
-              "hits": [
-                {
-                  "fieldReferenceName": "system.description",
-                  "highlights": ["fix <highlighthit>deploy</highlighthit> notes"]
-                }
-              ]
-            },
-            {
-              "fields": {
-                "system.id": "13",
-                "system.title": "Deploy docs cleanup",
-                "system.state": "Closed",
-                "system.workitemtype": "Task",
-                "system.changeddate": "2026-04-26T08:00:00Z"
-              },
-              "hits": [
-                {
-                  "fieldReferenceName": "system.title",
-                  "highlights": ["<highlighthit>Deploy</highlighthit> docs cleanup"]
-                }
-              ]
-            }
-          ]
-        }
-        """;
+        var payload = FixtureCatalog.ReadText("ApiResponses", "search-work-items-deploy-default.json");
 
         using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
         {
@@ -183,43 +85,7 @@ public sealed class AzureDevOpsWorkItemClientTests
     [Fact]
     public async Task SearchWorkItemsAsync_WhenIncludeDescriptionTrue_IncludesDescriptionMatches_AndKeepsTitleHitsFirst()
     {
-        const string payload = """
-        {
-          "count": 2,
-          "results": [
-            {
-              "fields": {
-                "system.id": "21",
-                "system.title": "Deploy pipeline fails",
-                "system.state": "Active",
-                "system.workitemtype": "Bug",
-                "system.changeddate": "2026-04-26T07:00:00Z"
-              },
-              "hits": [
-                {
-                  "fieldReferenceName": "system.title",
-                  "highlights": ["<highlighthit>Deploy</highlighthit> pipeline fails"]
-                }
-              ]
-            },
-            {
-              "fields": {
-                "system.id": "22",
-                "system.title": "Investigate flaky tests",
-                "system.state": "New",
-                "system.workitemtype": "Task",
-                "system.changeddate": "2026-04-26T08:00:00Z"
-              },
-              "hits": [
-                {
-                  "fieldReferenceName": "system.description",
-                  "highlights": ["fix <highlighthit>deploy</highlighthit> notes"]
-                }
-              ]
-            }
-          ]
-        }
-        """;
+        var payload = FixtureCatalog.ReadText("ApiResponses", "search-work-items-deploy-with-description.json");
 
         using var httpClient = new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {

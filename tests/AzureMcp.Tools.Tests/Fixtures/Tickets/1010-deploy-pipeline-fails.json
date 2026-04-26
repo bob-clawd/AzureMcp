@@ -1,0 +1,15 @@
+{
+  "id": 1010,
+  "title": "Deploy pipeline fails",
+  "state": "Active",
+  "workItemType": "Bug",
+  "descriptionText": "Release gate timed out while publishing artifacts.",
+  "assignedTo": "Linus Torvalds",
+  "parentId": null,
+  "childrenIds": [],
+  "branches": [
+    "bugfix/ado-1010"
+  ],
+  "pullRequestRefs": [],
+  "changedDate": "2026-04-26T09:00:00Z"
+}

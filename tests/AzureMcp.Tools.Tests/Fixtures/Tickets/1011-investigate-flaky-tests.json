@@ -1,0 +1,13 @@
+{
+  "id": 1011,
+  "title": "Investigate flaky tests",
+  "state": "Active",
+  "workItemType": "Task",
+  "descriptionText": "Collect deploy notes from the failed rollout.",
+  "assignedTo": "Margaret Hamilton",
+  "parentId": null,
+  "childrenIds": [],
+  "branches": [],
+  "pullRequestRefs": [],
+  "changedDate": "2026-04-26T08:00:00Z"
+}

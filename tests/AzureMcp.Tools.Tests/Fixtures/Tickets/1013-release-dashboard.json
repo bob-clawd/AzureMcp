@@ -1,0 +1,15 @@
+{
+  "id": 1013,
+  "title": "Add release dashboard",
+  "state": "Done",
+  "workItemType": "Feature",
+  "descriptionText": "Show deployment throughput trends.",
+  "assignedTo": "Barbara Liskov",
+  "parentId": null,
+  "childrenIds": [],
+  "branches": [
+    "feature/ado-1013"
+  ],
+  "pullRequestRefs": [],
+  "changedDate": "2026-04-23T11:00:00Z"
+}

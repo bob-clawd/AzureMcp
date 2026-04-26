@@ -1,0 +1,13 @@
+{
+  "id": 1012,
+  "title": "Deploy docs cleanup",
+  "state": "Closed",
+  "workItemType": "Task",
+  "descriptionText": "Archive old deploy runbooks.",
+  "assignedTo": null,
+  "parentId": null,
+  "childrenIds": [],
+  "branches": [],
+  "pullRequestRefs": [],
+  "changedDate": "2026-04-26T10:00:00Z"
+}

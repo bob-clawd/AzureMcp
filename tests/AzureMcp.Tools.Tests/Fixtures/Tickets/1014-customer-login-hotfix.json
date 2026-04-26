@@ -1,0 +1,13 @@
+{
+  "id": 1014,
+  "title": "Customer login hotfix",
+  "state": "Removed",
+  "workItemType": "Bug",
+  "descriptionText": null,
+  "assignedTo": "Donald Knuth",
+  "parentId": null,
+  "childrenIds": [],
+  "branches": [],
+  "pullRequestRefs": [],
+  "changedDate": "2026-04-22T11:00:00Z"
+}

@@ -1,0 +1,39 @@
+{
+  "count": 2,
+  "results": [
+    {
+      "fields": {
+        "system.id": "21",
+        "system.title": "Deploy pipeline fails",
+        "system.state": "Active",
+        "system.workitemtype": "Bug",
+        "system.changeddate": "2026-04-26T07:00:00Z"
+      },
+      "hits": [
+        {
+          "fieldReferenceName": "system.title",
+          "highlights": [
+            "<highlighthit>Deploy</highlighthit> pipeline fails"
+          ]
+        }
+      ]
+    },
+    {
+      "fields": {
+        "system.id": "22",
+        "system.title": "Investigate flaky tests",
+        "system.state": "New",
+        "system.workitemtype": "Task",
+        "system.changeddate": "2026-04-26T08:00:00Z"
+      },
+      "hits": [
+        {
+          "fieldReferenceName": "system.description",
+          "highlights": [
+            "fix <highlighthit>deploy</highlighthit> notes"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": 1001,
+  "title": "Observability rollout",
+  "state": "Active",
+  "workItemType": "User Story",
+  "descriptionText": "Child description",
+  "assignedTo": "Ada Lovelace",
+  "parentId": 1000,
+  "childrenIds": [
+    1002
+  ],
+  "branches": [
+    "feature/ado-1001"
+  ],
+  "pullRequestRefs": [],
+  "changedDate": "2026-04-25T12:00:00Z"
+}

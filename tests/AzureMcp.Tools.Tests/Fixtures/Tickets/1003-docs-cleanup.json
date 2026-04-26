@@ -1,0 +1,13 @@
+{
+  "id": 1003,
+  "title": "Docs cleanup",
+  "state": "New",
+  "workItemType": "Task",
+  "descriptionText": "Sibling description",
+  "assignedTo": null,
+  "parentId": 1000,
+  "childrenIds": [],
+  "branches": [],
+  "pullRequestRefs": [],
+  "changedDate": "2026-04-24T09:00:00Z"
+}
