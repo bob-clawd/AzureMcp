@@ -1,5 +1,5 @@
 using AzureMcp.Tools.Tools;
-using AzureMcp.Tools.WorkItems;
+using AzureMcp.Tools.Clients;
 using AzureMcp.Tools.Configuration;
 using AzureMcp.Tools;
 
@@ -129,7 +129,7 @@ public sealed class ReadWorkItemToolTests
             => throw new InvalidOperationException("SearchWorkItemsAsync should not be called in this test.");
     }
 
-    private sealed class FakePullRequestClient : AzureMcp.Tools.Git.IAzureDevOpsPullRequestClient
+    private sealed class FakePullRequestClient : IAzureDevOpsPullRequestClient
     {
         public int Calls { get; private set; }
 
@@ -140,7 +140,7 @@ public sealed class ReadWorkItemToolTests
         }
     }
 
-    private sealed class SpyPullRequestClient : AzureMcp.Tools.Git.IAzureDevOpsPullRequestClient
+    private sealed class SpyPullRequestClient : IAzureDevOpsPullRequestClient
     {
         public int Calls { get; private set; }
 

@@ -1,7 +1,6 @@
 using System.Reflection;
 using AzureMcp.Tools.Configuration;
-using AzureMcp.Tools.Git;
-using AzureMcp.Tools.WorkItems;
+using AzureMcp.Tools.Clients;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AzureMcp.Tools;

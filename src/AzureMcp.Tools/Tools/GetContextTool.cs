@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using AzureMcp.Tools.Configuration;
-using AzureMcp.Tools.WorkItems;
+using AzureMcp.Tools.Clients;
 using ModelContextProtocol.Server;
 
 namespace AzureMcp.Tools.Tools;

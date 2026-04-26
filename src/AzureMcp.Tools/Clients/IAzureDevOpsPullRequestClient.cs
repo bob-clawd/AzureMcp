@@ -1,6 +1,6 @@
 using AzureMcp.Tools.Configuration;
 
-namespace AzureMcp.Tools.Git;
+namespace AzureMcp.Tools.Clients;
 
 public interface IAzureDevOpsPullRequestClient
 {
@@ -11,4 +11,3 @@ public interface IAzureDevOpsPullRequestClient
         int pullRequestId,
         CancellationToken cancellationToken = default);
 }
-

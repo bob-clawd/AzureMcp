@@ -1,6 +1,5 @@
 using System.ComponentModel;
-using AzureMcp.Tools.Git;
-using AzureMcp.Tools.WorkItems;
+using AzureMcp.Tools.Clients;
 using ModelContextProtocol.Server;
 using AzureMcp.Tools.Configuration;
 

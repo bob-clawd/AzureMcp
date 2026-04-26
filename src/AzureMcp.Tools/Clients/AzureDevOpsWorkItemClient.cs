@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using System.Text;
 using AzureMcp.Tools.Configuration;
 
-namespace AzureMcp.Tools.WorkItems;
+namespace AzureMcp.Tools.Clients;
 
 public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDevOpsWorkItemClient
 {

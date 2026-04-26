@@ -1,7 +1,7 @@
 using AzureMcp.Tools.Configuration;
 using AzureMcp.Tools;
 
-namespace AzureMcp.Tools.WorkItems;
+namespace AzureMcp.Tools.Clients;
 
 public interface IAzureDevOpsWorkItemClient
 {

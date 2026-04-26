@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text;
-using AzureMcp.Tools.WorkItems;
+using AzureMcp.Tools.Clients;
 using AzureMcp.Tools.Configuration;
 
 namespace AzureMcp.Tools.Tests.WorkItems;

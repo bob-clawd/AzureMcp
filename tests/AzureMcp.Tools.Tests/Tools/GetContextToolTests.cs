@@ -1,7 +1,7 @@
 using AzureMcp.Tools;
 using AzureMcp.Tools.Configuration;
 using AzureMcp.Tools.Tools;
-using AzureMcp.Tools.WorkItems;
+using AzureMcp.Tools.Clients;
 
 namespace AzureMcp.Tools.Tests.Tools;
 

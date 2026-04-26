@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using AzureMcp.Tools.Configuration;
 
-namespace AzureMcp.Tools.Git;
+namespace AzureMcp.Tools.Clients;
 
 public sealed class AzureDevOpsPullRequestClient(HttpClient httpClient) : IAzureDevOpsPullRequestClient
 {
@@ -168,4 +168,3 @@ public sealed class AzureDevOpsPullRequestClient(HttpClient httpClient) : IAzure
         }
     }
 }
-
