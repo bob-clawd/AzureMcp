@@ -73,54 +73,54 @@ dotnet run -c Release --project src/AzureMcp.Host/AzureMcp.Host.csproj -- --conf
 
 ## Tool: `read_work_item`
 
-Input:
+Loads a single Azure DevOps work item and returns a structured view of the fields that matter first.
+
+### Input
 
 ```json
 {
   "workItemId": 12345
+}
+```
+
+### Output
+
+```json
+{
+  "ticket": {
+    "id": 12345,
+    "title": "Improve deployment diagnostics",
+    "state": "Active",
+    "workItemType": "User Story",
+    "descriptionText": "Investigate missing logs during deployment.",
+    "assignedTo": "Ada Lovelace",
+    "parentId": 100,
+    "childrenIds": [200, 201],
+    "branches": ["feature/ado-12345"],
+    "pullRequests": [
+      {
+        "id": 33,
+        "descriptionText": "Tighten deployment log collection and retention checks."
+      }
+    ]
+  },
+  "error": null
 }
 ```
 
 ## Tool: `get_context`
 
-Input:
+Walks upward from any work item id to the topmost parent and returns the chain ordered from parent to child.
+
+### Input
 
 ```json
 {
   "workItemId": 12345
 }
-
-## Tool: `search_work_items`
-
-Input:
-
-```json
-{
-  "query": "deployment",
-  "top": 20,
-  "includeClosed": false,
-  "includeDescription": false
-}
 ```
 
-Example response shape:
-
-```json
-{
-  "tickets": [
-    {
-      "id": 12345,
-      "title": "Improve deployment diagnostics",
-      "state": "Active",
-      "workItemType": "User Story",
-      "changedDate": "2026-04-26T07:00:00Z"
-    }
-  ]
-}
-```
-```
-
-Example response shape:
+### Output
 
 ```json
 {
@@ -137,25 +137,47 @@ Example response shape:
       "workItemType": "Bug",
       "descriptionText": "Concrete problem"
     }
-  ]
+  ],
+  "error": null
 }
 ```
 
-Example response shape:
+## Tool: `search_work_items`
+
+Searches Azure DevOps work items by free-text query.
+By default it searches title only, excludes closed/done/removed items, and sorts open items first and then by most recently changed.
+
+### Input
 
 ```json
 {
-  "ticket": {
-    "id": 12345,
-    "title": "Improve deployment diagnostics",
-    "state": "Active",
-    "workItemType": "User Story",
-    "descriptionText": "Investigate missing logs during deployment.",
-    "assignedTo": "Ada Lovelace",
-    "parentId": 100,
-    "childrenIds": [200, 201],
-    "branches": ["feature/ado-12345"]
-  },
+  "query": "deployment",
+  "top": 20,
+  "includeClosed": false,
+  "includeDescription": false
+}
+```
+
+### Output
+
+```json
+{
+  "tickets": [
+    {
+      "id": 12345,
+      "title": "Improve deployment diagnostics",
+      "state": "Active",
+      "workItemType": "User Story",
+      "changedDate": "2026-04-26T07:00:00Z"
+    },
+    {
+      "id": 12312,
+      "title": "Deployment docs cleanup",
+      "state": "New",
+      "workItemType": "Task",
+      "changedDate": "2026-04-25T18:30:00Z"
+    }
+  ],
   "error": null
 }
 ```
