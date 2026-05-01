@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Net;
 using AzureMcp.Tools.Configuration;
 using AzureMcp.Tools.Clients;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +10,7 @@ public static class ServiceExtensions
 {
     public static IServiceCollection WithAzureMcp(
         this IServiceCollection services,
-        string configPath)
+        string? configPath)
     {
         return services
             .AddSingleton<IAzureDevOpsConnectionState>(new AzureDevOpsConnectionState(configPath))
@@ -21,8 +22,18 @@ public static class ServiceExtensions
 
     private static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        services.AddHttpClient<IAzureDevOpsWorkItemClient, AzureDevOpsWorkItemClient>();
-        services.AddHttpClient<IAzureDevOpsPullRequestClient, AzureDevOpsPullRequestClient>();
+        services.AddSingleton<IAzureDevOpsAuthState, AzureDevOpsAuthState>();
+        services.AddSingleton<IAzureDevOpsRequestDispatcher, AzureDevOpsRequestDispatcher>();
+        services.AddSingleton<IAzureDevOpsWorkItemClient, AzureDevOpsWorkItemClient>();
+        services.AddSingleton<IAzureDevOpsPullRequestClient, AzureDevOpsPullRequestClient>();
+
+        services.AddHttpClient(AzureDevOpsRequestDispatcher.PatClientName);
+        services.AddHttpClient(AzureDevOpsRequestDispatcher.WindowsClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                UseDefaultCredentials = true,
+                Credentials = CredentialCache.DefaultCredentials
+            });
 
         return services;
     }

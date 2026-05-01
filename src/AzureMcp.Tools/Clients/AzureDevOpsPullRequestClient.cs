@@ -1,12 +1,11 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 using AzureMcp.Tools.Configuration;
 
 namespace AzureMcp.Tools.Clients;
 
-public sealed class AzureDevOpsPullRequestClient(HttpClient httpClient) : IAzureDevOpsPullRequestClient
+public sealed class AzureDevOpsPullRequestClient(IAzureDevOpsRequestDispatcher requestDispatcher) : IAzureDevOpsPullRequestClient
 {
     public async Task<(PullRequestInfo? PullRequest, ErrorInfo? Error)> ReadPullRequestAsync(
         AzureDevOpsConnectionInfo connection,
@@ -41,15 +40,13 @@ public sealed class AzureDevOpsPullRequestClient(HttpClient httpClient) : IAzure
 
         var requestUrl = $"{connection.OrganizationUrl}/{projectId}/_apis/git/repositories/{repositoryId}/pullRequests/{pullRequestId}?api-version=7.1";
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        var token = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{connection.PersonalAccessToken}"));
-        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
-
         HttpResponseMessage response;
         try
         {
-            response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            response = await requestDispatcher.SendAsync(
+                connection,
+                () => CreateJsonRequest(requestUrl),
+                cancellationToken).ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
         {
@@ -85,7 +82,7 @@ public sealed class AzureDevOpsPullRequestClient(HttpClient httpClient) : IAzure
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
                 return AsError(
-                    "Azure DevOps Git request not authorized. Ask the user for a valid PAT with Code (read) scope, then update the config file.",
+                    "Azure DevOps Git request not authorized. Check Windows authentication and PAT configuration.",
                     new Dictionary<string, string>
                     {
                         ["pullRequestId"] = pullRequestId.ToString(),
@@ -150,6 +147,13 @@ public sealed class AzureDevOpsPullRequestClient(HttpClient httpClient) : IAzure
         string message,
         IReadOnlyDictionary<string, string>? details = null)
         => (null, new ErrorInfo(message, details));
+
+    private static HttpRequestMessage CreateJsonRequest(string requestUrl)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        return request;
+    }
 
     private static async Task<string?> TryReadBodySnippet(HttpResponseMessage response, CancellationToken cancellationToken)
     {

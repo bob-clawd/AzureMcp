@@ -39,16 +39,16 @@ public sealed class SearchWorkItemsToolTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ReturnsError_WhenNotConfigured_WithoutCallingClient()
+    public async Task ExecuteAsync_ReturnsConnectionError_WithoutCallingClient()
     {
         var client = new ThrowingWorkItemClient();
-        var tool = new SearchWorkItemsTool(client, new MissingConnectionState());
+        var tool = new SearchWorkItemsTool(client, new FailingConnectionState());
 
         var result = await tool.ExecuteAsync("deploy");
 
         result.Error.IsNotNull();
         result.Tickets.IsEmpty();
-        result.Error!.Message.IsContaining("config file");
+        result.Error!.Message.IsContaining("config invalid");
         client.SearchCalls.Is(0);
     }
 }

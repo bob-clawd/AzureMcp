@@ -18,7 +18,7 @@ public sealed class AzureDevOpsWorkItemClientTests
             Content = new StringContent(payload, Encoding.UTF8, "application/json")
         }));
 
-        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var client = new AzureDevOpsWorkItemClient(new StubRequestDispatcher(httpClient));
         var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
         var result = await client.ReadWorkItemAsync(connection, 12345);
 
@@ -41,7 +41,7 @@ public sealed class AzureDevOpsWorkItemClientTests
     {
         using var httpClient = new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)));
 
-        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var client = new AzureDevOpsWorkItemClient(new StubRequestDispatcher(httpClient));
         var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
 
         var result = await client.ReadWorkItemAsync(connection, 404);
@@ -66,7 +66,7 @@ public sealed class AzureDevOpsWorkItemClientTests
             };
         }));
 
-        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var client = new AzureDevOpsWorkItemClient(new StubRequestDispatcher(httpClient));
         var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", "Demo Project");
 
         var result = await client.SearchWorkItemsAsync(connection, "deploy", top: 20, includeClosed: false, includeDescription: false);
@@ -92,7 +92,7 @@ public sealed class AzureDevOpsWorkItemClientTests
             Content = new StringContent(payload, Encoding.UTF8, "application/json")
         }));
 
-        var client = new AzureDevOpsWorkItemClient(httpClient);
+        var client = new AzureDevOpsWorkItemClient(new StubRequestDispatcher(httpClient));
         var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
 
         var result = await client.SearchWorkItemsAsync(connection, "deploy", includeDescription: true);
@@ -106,5 +106,14 @@ public sealed class AzureDevOpsWorkItemClientTests
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             => Task.FromResult(responder(request));
+    }
+
+    private sealed class StubRequestDispatcher(HttpClient httpClient) : IAzureDevOpsRequestDispatcher
+    {
+        public Task<HttpResponseMessage> SendAsync(
+            AzureDevOpsConnectionInfo connection,
+            Func<HttpRequestMessage> requestFactory,
+            CancellationToken cancellationToken = default)
+            => httpClient.SendAsync(requestFactory(), cancellationToken);
     }
 }
