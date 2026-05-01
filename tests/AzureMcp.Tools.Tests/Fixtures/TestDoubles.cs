@@ -157,17 +157,17 @@ internal sealed class ConfiguredConnectionState : IAzureDevOpsConnectionState
         return true;
     }
 
-    public string ConfigPath => "/tmp/azuremcp.json";
+    public string? ConfigPath => "/tmp/azuremcp.json";
 }
 
-internal sealed class MissingConnectionState : IAzureDevOpsConnectionState
+internal sealed class FailingConnectionState : IAzureDevOpsConnectionState
 {
     public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error)
     {
         connection = default!;
-        error = AzureMcpErrors.MissingConfig(ConfigPath, ["organizationUrl", "personalAccessToken"]);
+        error = new ErrorInfo("config invalid");
         return false;
     }
 
-    public string ConfigPath => "/tmp/azuremcp.json";
+    public string? ConfigPath => "/tmp/azuremcp.json";
 }

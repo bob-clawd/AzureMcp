@@ -44,22 +44,28 @@ By default it searches title only, excludes closed/done/removed items, and sorts
 
 ## Configuration
 
-AzureMcp requires a config file path on startup.
-The **config file is the source of truth** for the Azure DevOps connection.
+AzureMcp can run without a config file.
 
-If required values are missing when you call a tool, the server returns an actionable error:
-ask the user for the missing value(s), then update the config file.
+Behavior:
 
-### Required
+- built-in fallback `organizationUrl`: `http://localhost:8080/tfs/DefaultCollection`
+- `--config <path>` is optional
+- if a config file path is passed and the file exists, non-empty values from the file override built-in defaults
+- if the file path is passed but the file does not exist, startup continues with defaults
+- if the file exists but contains malformed JSON or an invalid `organizationUrl`, startup fails fast
 
-- `--config <path>` (required)
+Authentication behavior:
+
+- if `personalAccessToken` is present after config resolution, AzureMcp tries **PAT first**
+- if PAT auth fails with `401`/`403`, AzureMcp falls back to **Windows Integrated Auth**
+- if no PAT is present, AzureMcp uses **Windows Integrated Auth only**
 
 ### Config file shape
 
 ```json
 {
-  "organizationUrl": "https://dev.azure.com/your-org",
-  "personalAccessToken": "your-pat",
+  "organizationUrl": "https://ado.contoso.local/tfs/DefaultCollection",
+  "personalAccessToken": "optional-pat",
   "project": "optional-project"
 }
 ```
@@ -68,6 +74,9 @@ ask the user for the missing value(s), then update the config file.
 
 ```bash
 export PATH="$PATH:/home/bob/.dotnet"
+dotnet run -c Release --project src/AzureMcp.Host/AzureMcp.Host.csproj
+
+# optional overrides
 dotnet run -c Release --project src/AzureMcp.Host/AzureMcp.Host.csproj -- --config ~/.config/azuremcp/config.json
 ```
 

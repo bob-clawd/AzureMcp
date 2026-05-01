@@ -74,14 +74,20 @@ These slices establish the default pattern for future tools:
 
 ## Configuration
 
-AzureMcp requires a config file path on startup:
+AzureMcp resolves connection settings from:
 
-- `--config <path>`
+1. built-in defaults
+2. optional config file overrides (`--config <path>`)
 
-The config file is the source of truth for Azure DevOps connection values.
+Current intent:
 
-If required values are missing/invalid when you call a tool, the server returns an actionable error:
-ask the user for the missing value(s), then update the config file.
+- zero-config startup for self-hosted Azure DevOps Server
+- optional config file for overrides
+- PAT optional
+- Windows Integrated Auth available without config
+- PAT tried first when present, with Windows fallback on `401`/`403`
+
+Malformed config files still fail fast.
 
 ## Extension strategy
 

@@ -2,12 +2,13 @@ namespace AzureMcp.Tools.Configuration;
 
 internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
 {
-    public string ConfigPath { get; }
+    public string? ConfigPath { get; }
 
-    public AzureDevOpsConnectionState(string configPath)
+    public AzureDevOpsConnectionState(string? configPath)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(configPath);
-        ConfigPath = Path.GetFullPath(configPath);
+        ConfigPath = string.IsNullOrWhiteSpace(configPath)
+            ? null
+            : Path.GetFullPath(configPath);
     }
 
     public bool TryGetRequired(out AzureDevOpsConnectionInfo connection, out ErrorInfo? error)
@@ -20,9 +21,26 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
             return false;
         }
 
-        var org = NormalizeUrl(configRead.OrganizationUrl);
+        var configOrg = NormalizeUrl(configRead.OrganizationUrl);
         var pat = NormalizeString(configRead.PersonalAccessToken);
         var project = NormalizeString(configRead.Project);
+
+        if (!string.IsNullOrWhiteSpace(configOrg)
+            && (!Uri.TryCreate(configOrg, UriKind.Absolute, out var configParsed)
+                || (configParsed.Scheme != Uri.UriSchemeHttps && configParsed.Scheme != Uri.UriSchemeHttp)))
+        {
+            connection = default!;
+            error = new ErrorInfo(
+                $"AzureMcp config file is invalid. Config file: '{ConfigPath}'. The 'organizationUrl' must be an absolute http/https URL. Fix the file.",
+                new Dictionary<string, string>
+                {
+                    ["path"] = ConfigPath ?? string.Empty,
+                    ["organizationUrl"] = configOrg
+                });
+            return false;
+        }
+
+        var org = configOrg ?? AzureDevOpsDefaults.DefaultOrganizationUrl;
 
         if (!string.IsNullOrWhiteSpace(org)
             && (!Uri.TryCreate(org, UriKind.Absolute, out var parsed)
@@ -33,26 +51,15 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
                 $"AzureMcp config file is invalid. Config file: '{ConfigPath}'. The 'organizationUrl' must be an absolute http/https URL. Fix the file.",
                 new Dictionary<string, string>
                 {
-                    ["path"] = ConfigPath,
+                    ["path"] = ConfigPath ?? string.Empty,
                     ["organizationUrl"] = org
                 });
             return false;
         }
 
-        var missing = new List<string>();
-        if (string.IsNullOrWhiteSpace(org)) missing.Add("organizationUrl");
-        if (string.IsNullOrWhiteSpace(pat)) missing.Add("personalAccessToken");
-
-        if (missing.Count > 0)
-        {
-            connection = default!;
-            error = AzureMcpErrors.MissingConfig(ConfigPath, missing);
-            return false;
-        }
-
         connection = new AzureDevOpsConnectionInfo(
             OrganizationUrl: org!,
-            PersonalAccessToken: pat!,
+            PersonalAccessToken: pat,
             Project: project);
 
         error = null;
@@ -63,7 +70,7 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
     {
         try
         {
-            if (!File.Exists(ConfigPath))
+            if (string.IsNullOrWhiteSpace(ConfigPath) || !File.Exists(ConfigPath))
                 return (null, null, null, null);
 
             var json = File.ReadAllText(ConfigPath);
@@ -84,7 +91,7 @@ internal sealed class AzureDevOpsConnectionState : IAzureDevOpsConnectionState
                     "AzureMcp config file could not be read/parsed. Fix or replace the file.",
                     new Dictionary<string, string>
                     {
-                        ["path"] = ConfigPath,
+                        ["path"] = ConfigPath ?? string.Empty,
                         ["exception"] = ex.GetType().Name,
                         ["message"] = ex.Message
                     }));

@@ -51,15 +51,15 @@ public sealed class GetContextToolTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ReturnsConfigError_WhenNotConfigured_WithoutCallingClient()
+    public async Task ExecuteAsync_ReturnsConnectionError_WithoutCallingClient()
     {
         var client = new ThrowingWorkItemClient();
-        var tool = new GetContextTool(client, new MissingConnectionState());
+        var tool = new GetContextTool(client, new FailingConnectionState());
 
         var result = await tool.ExecuteAsync(1002);
 
         result.Error.IsNotNull();
-        result.Error!.Message.IsContaining("config file");
+        result.Error!.Message.IsContaining("config invalid");
         client.ReadCalls.Is(0);
     }
 }

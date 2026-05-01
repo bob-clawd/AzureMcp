@@ -7,7 +7,7 @@ using AzureMcp.Tools.Configuration;
 
 namespace AzureMcp.Tools.Clients;
 
-public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDevOpsWorkItemClient
+public sealed class AzureDevOpsWorkItemClient(IAzureDevOpsRequestDispatcher requestDispatcher) : IAzureDevOpsWorkItemClient
 {
     private static readonly HashSet<string> ClosedStates = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -28,15 +28,13 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
 
         var requestUrl = $"{connection.OrganizationUrl}/_apis/wit/workitems/{workItemId}?$expand=all&api-version=7.1";
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        var token = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{connection.PersonalAccessToken}"));
-        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
-
         HttpResponseMessage response;
         try
         {
-            response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            response = await requestDispatcher.SendAsync(
+                connection,
+                () => CreateJsonRequest(HttpMethod.Get, requestUrl),
+                cancellationToken).ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
         {
@@ -68,7 +66,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
                 return AsError(
-                    "Azure DevOps request not authorized. Ask the user for a valid PAT (and required scopes), then update the config file.",
+                    "Azure DevOps request not authorized. Check Windows authentication and PAT configuration.",
                     new Dictionary<string, string>
                     {
                         ["workItemId"] = workItemId.ToString(),
@@ -163,19 +161,16 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
 
         var requestBody = JsonSerializer.Serialize(requestPayload);
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, requestUrl)
-        {
-            Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
-        };
-
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        var token = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{connection.PersonalAccessToken}"));
-        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
-
         HttpResponseMessage response;
         try
         {
-            response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            response = await requestDispatcher.SendAsync(
+                connection,
+                () => CreateJsonRequest(
+                    HttpMethod.Post,
+                    requestUrl,
+                    new StringContent(requestBody, Encoding.UTF8, "application/json")),
+                cancellationToken).ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
         {
@@ -195,7 +190,7 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
                 return (null, new ErrorInfo(
-                    "Azure DevOps search request not authorized. Ask the user for a valid PAT (and required scopes), then update the config file.",
+                    "Azure DevOps search request not authorized. Check Windows authentication and PAT configuration.",
                     new Dictionary<string, string>
                     {
                         ["query"] = query,
@@ -250,6 +245,14 @@ public sealed class AzureDevOpsWorkItemClient(HttpClient httpClient) : IAzureDev
         string message,
         IReadOnlyDictionary<string, string>? details = null)
         => (null, new ErrorInfo(message, details));
+
+    private static HttpRequestMessage CreateJsonRequest(HttpMethod method, string requestUrl, HttpContent? content = null)
+    {
+        var request = new HttpRequestMessage(method, requestUrl);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Content = content;
+        return request;
+    }
 
     private static string BuildSearchUrl(AzureDevOpsConnectionInfo connection)
     {

@@ -35,14 +35,11 @@ public static class McpServerHost
             }
         }
 
-        if (string.IsNullOrWhiteSpace(configPath))
-            throw new ArgumentException("Missing required option '--config <path>'.", nameof(args));
-
-        configPath = Path.GetFullPath(configPath);
-
         return new AzureMcpOptions
         {
-            ConfigPath = configPath,
+            ConfigPath = string.IsNullOrWhiteSpace(configPath)
+                ? null
+                : Path.GetFullPath(configPath),
         };
     }
 

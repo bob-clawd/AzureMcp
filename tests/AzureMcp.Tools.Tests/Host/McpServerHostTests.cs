@@ -5,6 +5,14 @@ namespace AzureMcp.Tools.Tests.Host;
 public sealed class McpServerHostTests
 {
     [Fact]
+    public void ParseOptions_AllowsMissingConfigPath()
+    {
+        var options = McpServerHost.ParseOptions([]);
+
+        options.ConfigPath.IsNull();
+    }
+
+    [Fact]
     public void ParseOptions_ParsesConfigPath()
     {
         var options = McpServerHost.ParseOptions(["--config", "/tmp/azuremcp.json"]);

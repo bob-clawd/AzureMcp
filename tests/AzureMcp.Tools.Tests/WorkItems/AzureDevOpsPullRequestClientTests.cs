@@ -18,7 +18,7 @@ public sealed class AzureDevOpsPullRequestClientTests
             Content = new StringContent(payload, Encoding.UTF8, "application/json")
         }));
 
-        var client = new AzureDevOpsPullRequestClient(httpClient);
+        var client = new AzureDevOpsPullRequestClient(new StubRequestDispatcher(httpClient));
         var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
 
         var result = await client.ReadPullRequestAsync(
@@ -38,7 +38,7 @@ public sealed class AzureDevOpsPullRequestClientTests
     {
         using var httpClient = new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)));
 
-        var client = new AzureDevOpsPullRequestClient(httpClient);
+        var client = new AzureDevOpsPullRequestClient(new StubRequestDispatcher(httpClient));
         var connection = new AzureDevOpsConnectionInfo("https://dev.azure.com/test-org", "secret-pat", null);
 
         var result = await client.ReadPullRequestAsync(
@@ -55,5 +55,14 @@ public sealed class AzureDevOpsPullRequestClientTests
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             => Task.FromResult(responder(request));
+    }
+
+    private sealed class StubRequestDispatcher(HttpClient httpClient) : IAzureDevOpsRequestDispatcher
+    {
+        public Task<HttpResponseMessage> SendAsync(
+            AzureDevOpsConnectionInfo connection,
+            Func<HttpRequestMessage> requestFactory,
+            CancellationToken cancellationToken = default)
+            => httpClient.SendAsync(requestFactory(), cancellationToken);
     }
 }
